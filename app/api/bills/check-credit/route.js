@@ -10,18 +10,32 @@ export async function GET(request) {
   const customerName = searchParams.get('customerName') || '';
   try {
     const creditBills = await sanityClient.fetch(
-      `*[_type == "bill" && customerName match $name && billStatus == "CREDIT"]{ billNumber, creditAmount, creditPaidAmount, date, customerName }`,
-      { name: `*${customerName}*` }
+      `*[_type == "bill" && lower(customerName) match $name]{ billNumber, creditAmount, creditPaidAmount, date, customerName, billStatus }`,
+      { name: `*${customerName.toLowerCase()}*` }
     );
-    const totalCredit = creditBills.reduce((s, b) => s + (b.creditAmount || 0), 0);
-    const totalPaid = creditBills.reduce((s, b) => s + (b.creditPaidAmount || 0), 0);
+
+    const withBalance = (creditBills || []).map(b => ({
+      ...b,
+      balance: Number((((Number(b.creditAmount) || 0) - (Number(b.creditPaidAmount) || 0)) || 0).toFixed(2)),
+    }));
+    const outstanding = withBalance.filter(b => b.balance > 0.009);
+
+    const totalCredit = Number((withBalance.reduce((s, b) => s + (Number(b.creditAmount) || 0), 0)).toFixed(2));
+    const totalPaid = Number((withBalance.reduce((s, b) => s + (Number(b.creditPaidAmount) || 0), 0)).toFixed(2));
+    const balanceToPay = Number(outstanding.reduce((s, b) => s + b.balance, 0).toFixed(2));
+    const creditOrdersCount = outstanding.length;
+    const iscustomerHasCredit = creditOrdersCount > 0;
+
     return NextResponse.json({
       data: {
-        hasCredit: totalCredit > totalPaid,
+        iscustomerHasCredit,
+        creditOrdersCount,
+        balanceToPay,
+        hasCredit: iscustomerHasCredit,
+        pendingCredit: Number((totalCredit - totalPaid).toFixed(2)),
         totalCredit,
         totalPaid,
-        pendingCredit: totalCredit - totalPaid,
-        bills: creditBills,
+        bills: withBalance,
       }
     });
   } catch (e) {

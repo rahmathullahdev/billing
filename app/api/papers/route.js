@@ -24,7 +24,7 @@ export async function POST(request) {
   if (error) return NextResponse.json({ error }, { status: 401 });
   try {
     const body = await request.json();
-    const created = await sanityClient.create({ _type: 'paper', paperId: body.paperId || id(), name: body.name, paperCategory: body.paperCategory || '', paperCategoryId: body.paperCategoryId || '', paperGroup: body.paperGroup || '', paperGroupId: body.paperGroupId || '', readingCount: 0, isActive: true });
+    const created = await sanityClient.create({ _type: 'paper', paperId: body.paperId || id(), name: body.name, paperCategory: body.paperCategory || '', paperCategoryId: body.paperCategoryId || '', paperGroup: body.paperGroup || '', paperGroupId: body.paperGroupId || '', reamPrice: parseFloat(body.reamPrice) || 0, sheetRate: parseFloat(body.sheetRate) || 0, readingCount: 0, isActive: true });
     return NextResponse.json({ data: created }, { status: 201 });
   } catch (e) { return NextResponse.json({ error: e.message }, { status: 500 }); }
 }

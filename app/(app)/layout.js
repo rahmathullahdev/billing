@@ -7,76 +7,76 @@ import toast, { Toaster } from 'react-hot-toast';
 
 // Sidebar Navigation Structure matching original Menubar.jsx
 const NAV_ITEMS = [
-  { icon: 'bi-grid-1x2', label: 'Dashboard', href: '/dashboard' },
-  { icon: 'bi-plus-circle', label: 'New Bills', href: '/bills/create' },
+  { icon: 'bi-grid-1x2', label: 'Dashboard', href: '/dashboard', access: 'DASHBOARD' },
+  { icon: 'bi-plus-circle', label: 'New Bills', href: '/bills/create', access: 'BILLS_CREATE' },
   {
     icon: 'bi-receipt-cutoff', label: 'Bill',
     children: [
-      { icon: 'bi-calendar-event', label: 'View Today', href: '/bills/today' },
-      { icon: 'bi-list-check', label: 'View All bills', href: '/bills/all' },
+      { icon: 'bi-calendar-event', label: 'View Today', href: '/bills/today', access: 'BILLS_TODAY' },
+      { icon: 'bi-list-check', label: 'View All bills', href: '/bills/all', access: 'BILLS_ALL' },
     ]
   },
-  { icon: 'bi-graph-up', label: 'Analytics', href: '/analytics' },
-  { icon: 'bi-credit-card-2-front', label: 'Credit Management', href: '/credits' },
+  { icon: 'bi-graph-up', label: 'Analytics', href: '/analytics', access: 'ANALYTICS' },
+  { icon: 'bi-credit-card-2-front', label: 'Credit Management', href: '/credits', access: 'CREDITS' },
   { type: 'heading', label: 'Manage' },
-  { icon: 'bi-list-columns-reverse', label: 'Particulars', href: '/particulars' },
-  { icon: 'bi-building', label: 'Branch', href: '/branches' },
+  { icon: 'bi-list-columns-reverse', label: 'Particulars', href: '/particulars', access: 'PARTICULARS' },
+  { icon: 'bi-building', label: 'Branch', href: '/branches', access: 'BRANCHES' },
   {
     icon: 'bi-people-fill', label: 'Manage Employees',
     children: [
-      { icon: 'bi-person-badge', label: 'Employees', href: '/employees' },
-      { icon: 'bi-person', label: 'Users', href: '/users' },
-      { icon: 'bi-person-workspace', label: 'Employee View', href: '/employee-view' },
+      { icon: 'bi-person-badge', label: 'Employees', href: '/employees', access: 'EMPLOYEES' },
+      { icon: 'bi-person', label: 'Users', href: '/users', access: 'USERS' },
+      { icon: 'bi-person-workspace', label: 'Employee View', href: '/employee-view', access: 'EMPLOYEE_VIEW' },
     ]
   },
   {
     icon: 'bi-person-lines-fill', label: 'Customers',
     children: [
-      { icon: 'bi-person-lines-fill', label: 'Manage', href: '/customers' },
-      { icon: 'bi-person-vcard', label: 'Customer View', href: '/customer-view' },
+      { icon: 'bi-person-lines-fill', label: 'Manage', href: '/customers', access: 'CUSTOMERS' },
+      { icon: 'bi-person-vcard', label: 'Customer View', href: '/customer-view', access: 'CUSTOMER_VIEW' },
     ]
   },
   {
     icon: 'bi-gear-wide-connected', label: 'Machines',
     children: [
-      { icon: 'bi-diagram-3', label: 'Categories', href: '/machine-category' },
-      { icon: 'bi-printer', label: 'Machines', href: '/machine' },
+      { icon: 'bi-diagram-3', label: 'Categories', href: '/machine-category', access: 'MACHINE_CATEGORY' },
+      { icon: 'bi-printer', label: 'Machines', href: '/machine', access: 'MACHINE' },
     ]
   },
   {
     icon: 'bi-file-earmark-ruled', label: 'Paper',
     children: [
-      { icon: 'bi-layers', label: 'Paper Category', href: '/paper-category' },
-      { icon: 'bi-collection', label: 'Paper Groups', href: '/paper-group' },
-      { icon: 'bi-file-earmark-text', label: 'Paper', href: '/paper' },
+      { icon: 'bi-layers', label: 'Paper Category', href: '/paper-category', access: 'PAPER_CATEGORY' },
+      { icon: 'bi-collection', label: 'Paper Groups', href: '/paper-group', access: 'PAPER_GROUP' },
+      { icon: 'bi-file-earmark-text', label: 'Paper', href: '/paper', access: 'PAPER' },
     ]
   },
   {
     icon: 'bi-gear', label: 'Operations',
     children: [
-      { icon: 'bi-receipt', label: 'Expense Item', href: '/expense-item' },
-      { icon: 'bi-calendar-day', label: 'Daily Expense', href: '/daily-expenses' },
-      { icon: 'bi-calendar-month', label: 'Monthly Expense', href: '/monthly-expense' },
+      { icon: 'bi-receipt', label: 'Expense Item', href: '/expense-item', access: 'EXPENSE_ITEM' },
+      { icon: 'bi-calendar-day', label: 'Daily Expense', href: '/daily-expenses', access: 'DAILY_EXPENSES' },
+      { icon: 'bi-calendar-month', label: 'Monthly Expense', href: '/monthly-expense', access: 'MONTHLY_EXPENSE' },
     ]
   },
   {
     icon: 'bi-file-bar-graph', label: 'Reports',
     children: [
-      { icon: 'bi-journal-text', label: 'Daily Expense', href: '/reports/daily-expense' },
+      { icon: 'bi-journal-text', label: 'Daily Expense', href: '/reports/daily-expense', access: 'REPORTS_DAILY_EXPENSE' },
     ]
   },
   { type: 'heading', label: 'Security' },
-  { icon: 'bi-shield-lock', label: 'Page Access', href: '/manage-page-access' },
+  { icon: 'bi-shield-lock', label: 'Page Access', href: '/manage-page-access', access: 'MANAGE_PAGE_ACCESS' },
   { type: 'heading', label: 'More' },
-  { icon: 'bi-clock-history', label: 'Order History', href: '/orders' },
+  { icon: 'bi-clock-history', label: 'Order History', href: '/orders', access: 'ORDERS' },
 ];
 
-function NavItem({ item, collapsed, pathname }) {
+function NavItem({ item, collapsed, pathname, hasAccess }) {
   const [open, setOpen] = useState(false);
 
   useEffect(() => {
     if (item.children) {
-      const hasActive = item.children.some(c => pathname === c.href || pathname.startsWith(c.href + '/'));
+      const hasActive = (item.children ?? []).some(c => pathname === c.href || pathname.startsWith(c.href + '/'));
       if (hasActive) setOpen(true);
     }
   }, [pathname, item.children]);
@@ -86,7 +86,9 @@ function NavItem({ item, collapsed, pathname }) {
   }
 
   if (item.children) {
-    const isChildActive = item.children.some(c => pathname === c.href);
+    const children = item.children.filter(c => hasAccess(c.access));
+    if (children.length === 0) return null;
+    const isChildActive = children.some(c => pathname === c.href);
     return (
       <div className="nav-group">
         <a
@@ -103,7 +105,7 @@ function NavItem({ item, collapsed, pathname }) {
         <div className={`submenu-wrapper ${open ? 'open' : ''}`}>
           <div className="submenu">
             <div className="submenu-content">
-              {item.children.map(child => (
+              {children.map(child => (
                 <Link key={child.href} href={child.href} className={`sidebar-link submenu-link ${pathname === child.href ? 'active' : ''}`}>
                   <i className={`bi ${child.icon}`}></i>
                   <span className="link-text">{child.label}</span>
@@ -126,7 +128,7 @@ function NavItem({ item, collapsed, pathname }) {
 }
 
 function Sidebar({ collapsed, setCollapsed, mobileOpen, setMobileOpen }) {
-  const { auth } = useApp();
+  const { auth, hasAccess } = useApp();
   const router = useRouter();
   const pathname = usePathname();
   const [showLogout, setShowLogout] = useState(false);
@@ -138,6 +140,19 @@ function Sidebar({ collapsed, setCollapsed, mobileOpen, setMobileOpen }) {
   };
 
   const isAdmin = auth.role === 'ROLE_ADMIN';
+
+  // Filter navigation by the current user's page access rules.
+  const visibleNav = NAV_ITEMS.filter((item) => {
+    if (item.type === 'heading') return true;
+    if (item.children) {
+      return item.children.some(c => hasAccess(c.access));
+    }
+    return hasAccess(item.access);
+  }).reduce((acc, item, idx, arr) => {
+    if (item.type === 'heading' && !arr.slice(idx + 1).some(k => k.type !== 'heading')) return acc;
+    acc.push(item);
+    return acc;
+  }, []);
 
   return (
     <aside className={`sidebar ${collapsed ? 'collapsed' : ''} ${mobileOpen ? 'mobile-open' : ''}`}>
@@ -161,16 +176,18 @@ function Sidebar({ collapsed, setCollapsed, mobileOpen, setMobileOpen }) {
       </div>
 
       <nav className="sidebar-menu" onClick={(e) => { if (e.target.closest('a')) setMobileOpen(false); }}>
-        {NAV_ITEMS.map((item, idx) => (
-          <NavItem key={idx} item={item} collapsed={collapsed} pathname={pathname} />
+        {visibleNav.map((item, idx) => (
+          <NavItem key={idx} item={item} collapsed={collapsed} pathname={pathname} hasAccess={hasAccess} />
         ))}
       </nav>
 
       <div className="sidebar-footer">
-        <Link className={`sidebar-link ${pathname === '/settings' ? 'active' : ''}`} href="/settings" title="Settings">
-          <i className="bi bi-gear"></i>
-          <span className="link-text">Settings</span>
-        </Link>
+        {hasAccess('SETTINGS') && (
+          <Link className={`sidebar-link ${pathname === '/settings' ? 'active' : ''}`} href="/settings" title="Settings">
+            <i className="bi bi-gear"></i>
+            <span className="link-text">Settings</span>
+          </Link>
+        )}
 
         <div className="sidebar-profile" onClick={() => setShowLogout(!showLogout)} title="User Profile" style={{ cursor: 'pointer' }}>
           <div className="profile-info">

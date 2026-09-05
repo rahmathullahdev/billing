@@ -64,11 +64,12 @@ export async function POST(request) {
     const body = await request.json();
     const doc = {
       _type: 'branch',
-      branchId: simpleId('BR'),
+      branchId: body.branchId || simpleId('BR'),
       name: body.name,
       address: body.address || '',
       phone: body.phone || '',
-      isActive: true,
+      email: body.email || '',
+      isActive: body.isActive !== undefined ? body.isActive : true,
     };
     const created = await sanityClient.create(doc);
     return NextResponse.json({ data: created }, { status: 201 });

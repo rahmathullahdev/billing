@@ -59,6 +59,8 @@ export async function POST(request) {
       phoneNumber: body.phoneNumber,
       companyName: body.companyName || '',
       taxNumber: body.taxNumber || '',
+      address: body.address || '',
+      creditAmount: parseFloat(body.creditAmount) || 0,
       isActive: true,
       createdAt: new Date().toISOString(),
     };

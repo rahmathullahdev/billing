@@ -1,11 +1,11 @@
 'use client';
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import toast from 'react-hot-toast';
 import ReceiptPopup from '@/components/ReceiptPopup';
 import { useApp } from '@/context/AppContext';
 
-export default function CreateBillPage() {
+function CreateBillContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const editId = searchParams.get('id');
@@ -14,15 +14,18 @@ export default function CreateBillPage() {
 
   const [printBill, setPrintBill] = useState(null);
   const [isSaving, setIsSaving] = useState(false);
-  const [savingType, setSavingType] = useState(null);
+  const [savingType, setSavingType] = useState(null); // 'save' | 'print' | null
+
+  // State
   const [billNumber, setBillNumber] = useState('');
 
-  // Employees & Customers
+  // Employee Search State
   const [employeeNames, setEmployeeNames] = useState([]);
   const [employeeSearch, setEmployeeSearch] = useState('');
   const [showEmployeeDropdown, setShowEmployeeDropdown] = useState(false);
   const [selectedEmployee, setSelectedEmployee] = useState('');
 
+  // Customer Search State
   const [customers, setCustomers] = useState([]);
   const [customerSearch, setCustomerSearch] = useState('');
   const [showCustomerDropdown, setShowCustomerDropdown] = useState(false);
@@ -33,13 +36,8 @@ export default function CreateBillPage() {
     customerEmail: ''
   });
 
-  // Credit modal check
-  const [showCreditModal, setShowCreditModal] = useState(false);
-  const [creditInfo, setCreditInfo] = useState(null);
-  const [isCheckingCredit, setIsCheckingCredit] = useState(false);
-
   const getEmptyParticularRow = () => ({
-    id: Date.now().toString() + Math.random().toString(),
+    id: Date.now().toString() + Math.random().toString(), // Ensure unique ID
     particularId: '',
     particularName: '',
     type: 'Single Side',
@@ -58,14 +56,34 @@ export default function CreateBillPage() {
   const [paymentType, setPaymentType] = useState('Cash');
   const [enableCredit, setEnableCredit] = useState(false);
   const [amountPaid, setAmountPaid] = useState('');
+
   const [showExtra, setShowExtra] = useState(false);
   const [priceDiscount, setPriceDiscount] = useState('');
   const [tdsAmount, setTdsAmount] = useState('');
 
+  // Credit Check State
+  const [showCreditModal, setShowCreditModal] = useState(false);
+  const [creditInfo, setCreditInfo] = useState(null);
+  const [isCheckingCredit, setIsCheckingCredit] = useState(false);
+
+  // Particulars Preload & Search State
   const [allParticulars, setAllParticulars] = useState([]);
   const [activeParticularDropdownRowId, setActiveParticularDropdownRowId] = useState(null);
 
+  // Derived State (Calculations)
   const [totals, setTotals] = useState({
+    totalItems: 0,
+    totalBillsWithoutGst: 0,
+    gstPercentage: 0, // Default to Non-GST (0%) on initial load
+    gstAmount: 0,
+    discount: 0,
+    tdsAmount: 0,
+    totalPaidCredits: 0,
+    totalCredits: 0,
+    totalToPay: 0
+  });
+
+  const ZERO_TOTALS = {
     totalItems: 0,
     totalBillsWithoutGst: 0,
     gstPercentage: 0,
@@ -75,108 +93,194 @@ export default function CreateBillPage() {
     totalPaidCredits: 0,
     totalCredits: 0,
     totalToPay: 0
-  });
+  };
 
   useEffect(() => {
     fetchInitialData();
-  }, [editId]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isEditMode, editId]);
 
   const fetchNextBillNumber = async () => {
     try {
-      const res = await fetch('/api/bills/next-bill-number');
-      const data = await res.json();
-      if (data.nextBillNumber) {
-        setBillNumber(data.nextBillNumber);
-      } else if (data.data) {
-        setBillNumber(data.data.nextBillNumber || data.data);
-      }
-    } catch (e) {
-      console.error('Error fetching next bill number', e);
+      const billRes = await fetch('/api/bills/next-bill-number');
+      const json = await billRes.json();
+      const d = json?.data;
+      setBillNumber((d && (d.billNumber || d.nextBillNumber)) || d || '');
+    } catch (err) {
+      console.error('Error loading bill number', err);
     }
   };
 
   const fetchInitialData = async () => {
     try {
+      const isCreate = !isEditMode;
+
+      // 1. Fetch Customers
       fetch('/api/customers')
         .then(r => r.json())
-        .then(d => {
-          const list = Array.isArray(d) ? d : (d.data || []);
-          setCustomers(list);
+        .then(custRes => {
+          if (custRes?.data) {
+            setCustomers(Array.isArray(custRes.data) ? custRes.data : (custRes.data.content || []));
+          }
         })
-        .catch(err => setCustomers([]));
+        .catch(err => console.error('Error loading customers', err));
 
-      fetch('/api/employees')
+      // 2. Fetch Employee Names
+      fetch('/api/employees?listAll=true')
         .then(r => r.json())
-        .then(d => {
-          const list = Array.isArray(d) ? d : (d.data || []);
-          setEmployeeNames(list);
+        .then(empRes => {
+          if (empRes?.data) {
+            setEmployeeNames(Array.isArray(empRes.data) ? empRes.data : (empRes.data.content || []));
+          }
         })
-        .catch(err => setEmployeeNames([]));
+        .catch(err => console.error('Error loading employee names', err));
 
-      fetch('/api/particulars')
-        .then(r => r.json())
-        .then(d => {
-          const list = Array.isArray(d) ? d : (d.data || []);
-          setAllParticulars(list);
-        })
-        .catch(err => setAllParticulars([]));
-
-      if (!isEditMode) {
+      // 3. Fetch Next Bill Number on create
+      if (isCreate) {
         fetchNextBillNumber();
-        if (auth?.username) {
-          setSelectedEmployee(auth.username);
-          setEmployeeSearch(auth.username);
-        }
-      } else {
+      }
+
+      // 4. Fetch All Particulars for Fast Lookup on Page Load
+      fetch('/api/particulars?forBill=true')
+        .then(r => r.json())
+        .then(particularsRes => {
+          if (particularsRes?.data) {
+            setAllParticulars(Array.isArray(particularsRes.data) ? particularsRes.data : []);
+          }
+        })
+        .catch(err => console.error('Error loading particulars for bill', err));
+
+      if (editId) {
         const res = await fetch(`/api/bills/${editId}`);
-        const bill = await res.json();
-        if (bill) {
-          setBillNumber(bill.billNumber);
-          setSelectedEmployee(bill.employee || '');
-          setEmployeeSearch(bill.employee || '');
-          setCustomerSearch(bill.customerName || '');
-          setSelectedCustomer({
-            customerName: bill.customerName || '',
-            customerGstNo: bill.customerGstNo || '',
-            customerMobileNo: bill.customerMobileNo || '',
-            customerEmail: bill.customerEmail || ''
-          });
-          setPaymentType(bill.payment || 'Cash');
-          setAmountPaid(bill.totalPaid || '');
-          setEnableCredit((bill.creditAmount || 0) > 0);
+        const json = await res.json();
+        const bill = json?.data;
+        if (!bill) return;
 
-          let parsed = [];
-          try {
-            parsed = typeof bill.particulars === 'string' ? JSON.parse(bill.particulars) : bill.particulars;
-          } catch (e) {}
+        setBillNumber(bill.billNumber);
+        setSelectedEmployee(bill.employee || '');
+        setEmployeeSearch(bill.employee || '');
 
-          const newList = (parsed || []).map(p => ({
-            id: Date.now().toString() + Math.random().toString(),
-            particularId: p.particularId || p.name || '',
-            particularName: (p.name || p.particularId || '').toUpperCase(),
-            type: 'Single Side',
-            qty: p.qty || 1,
-            basePrice: p.price || 0,
-            priceBack: p.price || 0,
-            individualPrice: p.price || 0,
-            totalPrice: (p.qty || 1) * (p.price || 0),
-            isFilled: true
-          }));
+        setCustomerSearch(bill.customerName || '');
+        setSelectedCustomer({
+          customerName: bill.customerName || '',
+          customerGstNo: bill.customerGstNo || '',
+          customerMobileNo: bill.customerMobileNo || '',
+          customerEmail: bill.customerEmail || ''
+        });
 
-          while (newList.length < 5) newList.push(getEmptyParticularRow());
-          setParticularsList(newList);
+        setPaymentType(bill.payment || 'Cash');
+        setAmountPaid(bill.totalPaid || '');
+        setEnableCredit((Number(bill.creditAmount) || 0) > 0);
+
+        setPriceDiscount('');
+        setTdsAmount('');
+
+        let parsedParticulars = [];
+        try {
+          if (typeof bill.particulars === 'string') {
+            parsedParticulars = JSON.parse(bill.particulars);
+          } else if (Array.isArray(bill.particulars)) {
+            parsedParticulars = bill.particulars;
+          }
+        } catch (e) {
+          console.error('Failed to parse particulars', e);
+        }
+
+        const newParticularsList = (parsedParticulars || []).map(p => ({
+          id: Date.now().toString() + Math.random().toString(),
+          particularId: p.particularId || p.particularName || '',
+          particularName: p.name || p.particularName || '',
+          type: 'Single Side',
+          qty: p.qty || 1,
+          basePrice: p.price || 0,
+          priceBack: p.price || 0,
+          individualPrice: p.price || 0,
+          totalPrice: (p.qty || 1) * (p.price || 0),
+          isFilled: true
+        }));
+
+        while (newParticularsList.length < 5 || newParticularsList.filter(p => !p.isFilled).length < 2) {
+          newParticularsList.push(getEmptyParticularRow());
+        }
+
+        setParticularsList(newParticularsList);
+      } else {
+        const username = auth?.user?.username || auth?.username || '';
+        if (username) {
+          setSelectedEmployee(username);
+          setEmployeeSearch(username);
         }
       }
-    } catch (e) {
+    } catch (error) {
+      console.error('Error fetching initial data', error);
       toast.error('Failed to load initial data');
     }
   };
+
+  const handleSaveRef = useRef();
+
+  useEffect(() => {
+    const handleGlobalKeyDown = (e) => {
+      // 1) Ctrl + Enter => GST Bill (18% GST) -> Auto Save & Print
+      if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
+        e.preventDefault();
+        e.stopPropagation();
+        if (handleSaveRef.current) {
+          handleSaveRef.current(true, 18);
+        }
+        return;
+      }
+
+      // 2) Plain Enter => Non-GST Bill (0% GST) -> Auto Save & Print
+      if (e.key === 'Enter' && !e.ctrlKey && !e.altKey && !e.shiftKey && !e.metaKey) {
+        const targetTag = e.target?.tagName?.toLowerCase();
+        const isParticularInput = e.target?.classList?.contains('particular-add-input') ||
+          e.target?.classList?.contains('particular-input') ||
+          e.target?.placeholder?.includes('Item ID') ||
+          e.target?.placeholder?.includes('Particular ID');
+
+        // If user is actively typing an Item ID into a particular input, let handleParticularAdd handle it
+        if (isParticularInput && e.target?.value?.trim() !== '') {
+          return;
+        }
+
+        if (targetTag === 'textarea' || targetTag === 'button') {
+          return;
+        }
+
+        e.preventDefault();
+        e.stopPropagation();
+        if (handleSaveRef.current) {
+          handleSaveRef.current(true, 0);
+        }
+      }
+    };
+
+    window.addEventListener('keydown', handleGlobalKeyDown);
+    return () => window.removeEventListener('keydown', handleGlobalKeyDown);
+  }, []);
 
   const handleEmployeeSelect = (emp) => {
     const fullName = typeof emp === 'object' ? (emp.fullName || emp.name || '') : String(emp);
     setSelectedEmployee(fullName);
     setEmployeeSearch(fullName);
   };
+
+  const handleEmployeeSearchChange = (e) => {
+    const val = e.target.value;
+    setEmployeeSearch(val);
+    setSelectedEmployee(val);
+    if (val.trim()) {
+      setShowEmployeeDropdown(true);
+    } else {
+      setShowEmployeeDropdown(false);
+    }
+  };
+
+  const filteredEmployees = (Array.isArray(employeeNames) ? employeeNames : []).filter(emp => {
+    const fullName = typeof emp === 'object' ? (emp.fullName || emp.name || '') : String(emp);
+    return fullName.toLowerCase().includes(employeeSearch.toLowerCase());
+  });
 
   const handleCustomerSelect = (customer) => {
     setCustomerSearch(customer.name);
@@ -191,26 +295,48 @@ export default function CreateBillPage() {
       setIsCheckingCredit(true);
       fetch(`/api/bills/check-credit?customerName=${encodeURIComponent(customer.name)}`)
         .then(r => r.json())
-        .then(res => {
-          if (res) {
-            setCreditInfo(res);
-            if (res.iscustomerHasCredit) {
+        .then((res) => {
+          if (res?.data) {
+            setCreditInfo(res.data);
+            if (res.data.iscustomerHasCredit) {
               setShowCreditModal(true);
             }
           }
         })
-        .catch(err => console.error('Credit check error', err))
-        .finally(() => setIsCheckingCredit(false));
+        .catch((err) => {
+          console.error('Failed to check customer credit', err);
+        })
+        .finally(() => {
+          setIsCheckingCredit(false);
+        });
     }
   };
+
+  const handleCustomerSearchChange = (e) => {
+    const val = e.target.value;
+    setCustomerSearch(val);
+    setSelectedCustomer(prev => ({ ...prev, customerName: val }));
+    if (val.trim()) {
+      setShowCustomerDropdown(true);
+    } else {
+      setShowCustomerDropdown(false);
+    }
+  };
+
+  const filteredCustomers = (Array.isArray(customers) ? customers : []).filter(c =>
+    c.name?.toLowerCase().includes(customerSearch.toLowerCase()) ||
+    c.phoneNumber?.includes(customerSearch)
+  );
 
   const selectParticularForItem = (rowId, data) => {
     if (!data) return;
     const pId = data.particularId || data.id || '';
-    const displayName = String(data.particularName || data.name || pId).toUpperCase();
+    const rawName = data.particularName || data.name || pId;
+    const displayName = String(rawName).toUpperCase();
 
+    const searchKey = String(pId).trim().toLowerCase();
     const safeList = Array.isArray(particularsList) ? particularsList : [];
-    const isDuplicate = safeList.some(p => p.id !== rowId && p.isFilled && (String(p.particularId || '').trim().toLowerCase() === String(pId).trim().toLowerCase() || String(p.particularName || '').toLowerCase() === displayName.toLowerCase()));
+    const isDuplicate = safeList.some(p => p.id !== rowId && p.isFilled && (String(p.particularId || '').trim().toLowerCase() === searchKey || String(p.particularName || '').toLowerCase() === displayName.toLowerCase()));
 
     if (isDuplicate) {
       toast.error('This particular is already added to the bill.');
@@ -236,7 +362,7 @@ export default function CreateBillPage() {
         return p;
       });
 
-      const emptyCount = newList.filter(p => !p.isFilled).length;
+      const emptyCount = (newList || []).filter(p => !p.isFilled).length;
       if (emptyCount < 2) {
         newList.push(getEmptyParticularRow());
       }
@@ -245,22 +371,37 @@ export default function CreateBillPage() {
     setActiveParticularDropdownRowId(null);
   };
 
-  const handleParticularAdd = (e, id) => {
-    const item = particularsList.find(p => p.id === id);
+  const handleParticularAdd = async (e, id) => {
+    const item = (particularsList || []).find(p => p.id === id);
     if (e.key === 'Enter') {
       if (item && item.particularId && item.particularId.trim() !== '') {
         e.preventDefault();
         e.stopPropagation();
         const searchId = item.particularId.trim().toLowerCase();
+
+        // 1. Fast Lookup from preloaded allParticulars
         const safeAll = Array.isArray(allParticulars) ? allParticulars : [];
         const matched = safeAll.find(p =>
           String(p.particularId || '').toLowerCase() === searchId ||
           String(p.particularName || p.name || '').toLowerCase() === searchId
         );
+
         if (matched) {
           selectParticularForItem(id, matched);
-        } else {
-          toast.error('Particular not found');
+          return;
+        }
+
+        // 2. Fallback API lookup if not found in preloaded list
+        try {
+          const res = await fetch(`/api/particulars/${encodeURIComponent(item.particularId.trim())}`);
+          const json = await res.json();
+          if (json?.data) {
+            selectParticularForItem(id, json.data);
+          } else {
+            toast.error('Particular not found');
+          }
+        } catch (error) {
+          toast.error('Particular not found or error fetching details');
         }
       }
     }
@@ -271,10 +412,12 @@ export default function CreateBillPage() {
       (prevList || []).map(item => {
         if (item.id === id) {
           let updatedItem = { ...item, [field]: value };
+
           if (field === 'type') {
             updatedItem.individualPrice = value === 'Single Side' ? updatedItem.basePrice : updatedItem.priceBack;
             updatedItem.totalPrice = updatedItem.qty * updatedItem.individualPrice;
           }
+
           if (field === 'qty' || field === 'individualPrice') {
             updatedItem.totalPrice = updatedItem.qty * updatedItem.individualPrice;
           }
@@ -308,6 +451,7 @@ export default function CreateBillPage() {
 
     const disc = Number(priceDiscount) || 0;
     const tds = Number(tdsAmount) || 0;
+
     const netSubtotal = Math.max(0, subtotalWithoutGst - disc - tds);
     const gstAmt = (netSubtotal * totals.gstPercentage) / 100;
     const finalToPay = netSubtotal + gstAmt;
@@ -326,8 +470,60 @@ export default function CreateBillPage() {
     }));
   }, [particularsList, totals.gstPercentage, priceDiscount, tdsAmount, amountPaid, enableCredit]);
 
+  const handleShowReceipt = (bill, autoPrint = false, activeGstPct = null) => {
+    let items = [];
+    const filledParticulars = (particularsList || []).filter(p => p.isFilled);
+
+    if (filledParticulars.length > 0) {
+      items = filledParticulars.map(p => ({
+        name: (p.particularName || p.name || 'ITEM').toUpperCase(),
+        quantity: p.qty || 1,
+        price: Number(p.individualPrice !== undefined && p.individualPrice !== null ? p.individualPrice : p.price) || 0
+      }));
+    } else if (bill && bill.particulars) {
+      try {
+        const parsed = typeof bill.particulars === 'string' ? JSON.parse(bill.particulars) : bill.particulars;
+        items = (parsed || []).map(p => ({
+          name: (p.particularName || p.name || p.particularId || 'ITEM').toUpperCase(),
+          quantity: p.qty || 1,
+          price: Number(p.price !== undefined && p.price !== null ? p.price : p.individualPrice) || 0
+        }));
+      } catch (e) {
+        console.error('Failed to parse bill particulars', e);
+      }
+    }
+
+    const effectiveTaxPct = activeGstPct !== null ? activeGstPct : totals.gstPercentage;
+    const net = bill.actualTotal !== undefined && bill.actualTotal !== null ? bill.actualTotal : (bill.totalWithGst || bill.total || 0);
+
+    const orderDetails = {
+      invoiceNumber: bill.billNumber,
+      orderId: bill.id,
+      createdAt: bill.createdAt || bill.date,
+      username: (bill.employee || '').toUpperCase(),
+      customerName: (bill.customerName || 'CASH CUSTOMER').toUpperCase(),
+      grandTotal: bill.total || 0,
+      paidAmount: bill.totalPaid || 0,
+      tax: (bill.total || 0) - net,
+      items: items,
+      creditType: bill.creditAmount > 0 ? 'CREDIT' : 'CASH',
+      pendingAmount: bill.creditAmount || 0,
+      taxPercent: effectiveTaxPct,
+      subtotal: net,
+      gstin: (bill.customerGstNo || '').toUpperCase()
+    };
+
+    setPrintBill(orderDetails);
+    if (autoPrint) {
+      setTimeout(() => {
+        window.print();
+      }, 500);
+    }
+  };
+
   const getFormattedBillNumberWithGst = (gstPct) => {
-    let num = billNumber || '';
+    let num = billNumber?.billNumber || billNumber || '';
+    if (!num) return '';
     const cleanNum = String(num).replace(/-E$/i, '');
     return gstPct === 0 ? `${cleanNum}-E` : cleanNum;
   };
@@ -339,66 +535,83 @@ export default function CreateBillPage() {
   const handleSave = async (printAfter = false, overrideGstPercent = null) => {
     if (isSaving) return;
 
-    const empName = (selectedEmployee || employeeSearch || '').trim();
-    if (!empName) {
-      toast.error('Please select or enter an Employee Name.');
-      return;
-    }
-
-    const custName = (selectedCustomer.customerName || customerSearch || '').trim();
-    if (!custName) {
-      toast.error('Please select or enter a Customer Name.');
-      return;
-    }
-
-    const filledItems = particularsList.filter(p => p.isFilled);
-    if (filledItems.length === 0) {
-      toast.error('Please add or select at least one particular item.');
-      return;
-    }
-
-    setIsSaving(true);
-    setSavingType(printAfter ? 'print' : 'save');
-
-    const activeGstPct = overrideGstPercent !== null ? overrideGstPercent : totals.gstPercentage;
-    const subtotalWithoutGst = filledItems.reduce((acc, curr) => acc + (Number(curr.totalPrice) || 0), 0);
-    const disc = Number(priceDiscount) || 0;
-    const tds = Number(tdsAmount) || 0;
-    const netSubtotal = Math.max(0, subtotalWithoutGst - disc - tds);
-    const gstAmt = activeGstPct > 0 ? (netSubtotal * activeGstPct) / 100 : 0;
-    const finalTotalToPay = Number((netSubtotal + gstAmt).toFixed(2));
-    const billNoToUse = getFormattedBillNumberWithGst(activeGstPct);
-
-    const calculatedTotalPaid = enableCredit
-      ? (amountPaid !== '' && amountPaid !== null ? Number(Number(amountPaid).toFixed(2)) : 0)
-      : finalTotalToPay;
-
-    const payload = {
-      billNumber: billNoToUse,
-      employee: empName,
-      customerName: custName,
-      customerEmail: selectedCustomer.customerEmail || '',
-      customerMobileNo: selectedCustomer.customerMobileNo || '',
-      customerGstNo: activeGstPct > 0 ? (selectedCustomer.customerGstNo || '') : '',
-      payment: paymentType.toUpperCase(),
-      totalPaid: calculatedTotalPaid,
-      total: finalTotalToPay,
-      creditAmount: enableCredit ? Number((finalTotalToPay - calculatedTotalPaid).toFixed(2)) : 0,
-      actualTotal: Number(subtotalWithoutGst.toFixed(2)),
-      totalWithGst: Number(finalTotalToPay.toFixed(2)),
-      totalItems: filledItems.length,
-      discount: Number(disc.toFixed(2)),
-      tdsAmount: Number(tds.toFixed(2)),
-      creditPaidAmount: enableCredit ? calculatedTotalPaid : 0,
-      particulars: JSON.stringify(filledItems.map(p => ({
-        particularId: p.particularId,
-        name: p.particularName,
-        qty: p.qty,
-        price: Number(Number(p.individualPrice).toFixed(2))
-      })))
-    };
-
     try {
+      // 1. Employee Name Validation
+      const empName = (selectedEmployee || employeeSearch || '').trim();
+      if (!empName) {
+        toast.error('Please select or enter an Employee Name.');
+        return;
+      }
+
+      // 2. Customer Name Validation
+      const custName = (selectedCustomer.customerName || customerSearch || '').trim();
+      if (!custName) {
+        toast.error('Please select or enter a Customer Name.');
+        return;
+      }
+
+      // 3. Particulars Item Validation
+      const filledItems = (particularsList || []).filter(p => p.isFilled);
+      if (filledItems.length === 0) {
+        toast.error('Please add or select at least one particular item.');
+        return;
+      }
+
+      setIsSaving(true);
+      setSavingType(printAfter ? 'print' : 'save');
+
+      const finalEmployeeName = empName;
+      const finalCustomerName = custName;
+
+      const activeGstPct = overrideGstPercent !== null ? overrideGstPercent : totals.gstPercentage;
+
+      // Calculate subtotal and GST dynamically to prevent stale state issues
+      const subtotalWithoutGst = filledItems.reduce((acc, curr) => acc + (Number(curr.totalPrice) || 0), 0);
+      const disc = Number(priceDiscount) || 0;
+      const tds = Number(tdsAmount) || 0;
+      const netSubtotal = Math.max(0, subtotalWithoutGst - disc - tds);
+      const gstAmt = activeGstPct > 0 ? (netSubtotal * activeGstPct) / 100 : 0;
+      const finalTotalToPay = Number((netSubtotal + gstAmt).toFixed(2));
+
+      // Always update totals state for UI rendering
+      setTotals(prev => ({
+        ...prev,
+        gstPercentage: activeGstPct,
+        gstAmount: gstAmt,
+        totalToPay: finalTotalToPay,
+        totalBillsWithoutGst: subtotalWithoutGst
+      }));
+
+      const billNoToUse = getFormattedBillNumberWithGst(activeGstPct);
+
+      const calculatedTotalPaid = enableCredit
+        ? (amountPaid !== '' && amountPaid !== null ? Number(Number(amountPaid).toFixed(2)) : 0)
+        : finalTotalToPay;
+
+      const payload = {
+        billNumber: billNoToUse,
+        employee: finalEmployeeName,
+        customerName: finalCustomerName,
+        customerEmail: selectedCustomer.customerEmail || '',
+        customerMobileNo: selectedCustomer.customerMobileNo || '',
+        customerGstNo: activeGstPct > 0 ? (selectedCustomer.customerGstNo || '') : '',
+        payment: paymentType.toUpperCase(),
+        totalPaid: calculatedTotalPaid,
+        total: finalTotalToPay,
+        creditAmount: enableCredit ? Number((finalTotalToPay - calculatedTotalPaid).toFixed(2)) : 0,
+        actualTotal: Number(subtotalWithoutGst.toFixed(2)),
+        totalWithGst: Number(finalTotalToPay.toFixed(2)),
+        totalItems: filledItems.length,
+        discount: Number(disc.toFixed(2)),
+        tdsAmount: Number(tds.toFixed(2)),
+        creditPaidAmount: enableCredit ? calculatedTotalPaid : 0,
+        particulars: JSON.stringify(filledItems.map(p => ({
+          particularId: p.particularId,
+          qty: p.qty,
+          price: Number(Number(p.individualPrice).toFixed(2))
+        })))
+      };
+
       const url = isEditMode ? `/api/bills/${editId}` : '/api/bills';
       const method = isEditMode ? 'PUT' : 'POST';
       const res = await fetch(url, {
@@ -408,26 +621,10 @@ export default function CreateBillPage() {
       });
       const resData = await res.json();
 
-      if (res.ok) {
+      if (resData.data) {
         toast.success(`Bill ${isEditMode ? 'updated' : 'saved'} successfully (${activeGstPct}% GST)!`);
-        if (printAfter) {
-          setPrintBill({
-            invoiceNumber: billNoToUse,
-            orderId: resData.id || editId,
-            createdAt: new Date().toISOString(),
-            username: empName,
-            customerName: custName,
-            grandTotal: finalTotalToPay,
-            paidAmount: calculatedTotalPaid,
-            tax: gstAmt,
-            items: filledItems.map(p => ({ name: p.particularName, quantity: p.qty, price: p.individualPrice })),
-            creditType: enableCredit ? 'CREDIT' : 'CASH',
-            pendingAmount: enableCredit ? (finalTotalToPay - calculatedTotalPaid) : 0,
-            taxPercent: activeGstPct,
-            subtotal: subtotalWithoutGst,
-            gstin: selectedCustomer.customerGstNo
-          });
-        }
+        handleShowReceipt(resData.data, printAfter, activeGstPct);
+
         if (!isEditMode) {
           setSelectedEmployee('');
           setEmployeeSearch('');
@@ -440,6 +637,7 @@ export default function CreateBillPage() {
           setPriceDiscount('');
           setTdsAmount('');
           setShowExtra(false);
+          setTotals({ ...ZERO_TOTALS });
           fetchNextBillNumber();
         }
       } else {
@@ -453,19 +651,20 @@ export default function CreateBillPage() {
     }
   };
 
+  useEffect(() => {
+    handleSaveRef.current = handleSave;
+  }, [handleSave]);
+
+  const handleCloseReceipt = () => {
+    setPrintBill(null);
+    if (isEditMode) {
+      router.push('/bills/all');
+    }
+  };
+
   const safeEmployeeNames = Array.isArray(employeeNames) ? employeeNames : [];
   const safeCustomers = Array.isArray(customers) ? customers : [];
   const safeAllParticulars = Array.isArray(allParticulars) ? allParticulars : [];
-
-  const filteredEmployees = safeEmployeeNames.filter(emp => {
-    const fullName = typeof emp === 'object' ? (emp.fullName || emp.name || '') : String(emp);
-    return fullName.toLowerCase().includes(employeeSearch.toLowerCase());
-  });
-
-  const filteredCustomers = safeCustomers.filter(c =>
-    (c.name && c.name.toLowerCase().includes(customerSearch.toLowerCase())) ||
-    (c.phoneNumber && c.phoneNumber.includes(customerSearch))
-  );
 
   return (
     <div className="create-bill-container fade-in">
@@ -477,21 +676,17 @@ export default function CreateBillPage() {
         {/* Row 1: Bill No, Employee, Customer Search */}
         <div className="bill-row row-1">
           <div className="form-group">
-            <label>BILL NUMBER</label>
+            <label>Bill Number</label>
             <input type="text" value={getFormattedBillNumber()} disabled className="form-control disabled-input bill-number-text" />
           </div>
           <div className="form-group customer-search-wrapper">
-            <label>EMPLOYEE NAME</label>
+            <label>Employee Name</label>
             <input
               type="text"
               placeholder="Search employee..."
               value={employeeSearch}
-              onChange={(e) => {
-                setEmployeeSearch(e.target.value);
-                setSelectedEmployee(e.target.value);
-                setShowEmployeeDropdown(true);
-              }}
-              onFocus={() => { if (employeeSearch) setShowEmployeeDropdown(true); }}
+              onChange={handleEmployeeSearchChange}
+              onFocus={() => { if (employeeSearch) setShowEmployeeDropdown(true) }}
               onBlur={() => setTimeout(() => setShowEmployeeDropdown(false), 200)}
               className="form-control"
             />
@@ -510,17 +705,13 @@ export default function CreateBillPage() {
             )}
           </div>
           <div className="form-group customer-search-wrapper">
-            <label>CUSTOMER NAME</label>
+            <label>Customer Name</label>
             <input
               type="text"
-              placeholder="Search customer..."
+              placeholder="Search by name..."
               value={customerSearch}
-              onChange={(e) => {
-                setCustomerSearch(e.target.value);
-                setSelectedCustomer(prev => ({ ...prev, customerName: e.target.value }));
-                setShowCustomerDropdown(true);
-              }}
-              onFocus={() => { if (customerSearch) setShowCustomerDropdown(true); }}
+              onChange={handleCustomerSearchChange}
+              onFocus={() => { if (customerSearch) setShowCustomerDropdown(true) }}
               onBlur={() => setTimeout(() => setShowCustomerDropdown(false), 200)}
               className="form-control"
             />
@@ -529,7 +720,7 @@ export default function CreateBillPage() {
                 {filteredCustomers.length > 0 ? (
                   filteredCustomers.map((c, idx) => (
                     <li key={idx} onMouseDown={(e) => { e.preventDefault(); handleCustomerSelect(c); setShowCustomerDropdown(false); }}>
-                      <span className="fw-bold">{c.name}</span> - {c.phoneNumber || 'No Mobile'}
+                      <span className="fw-bold">{c.name}</span> - {c.phoneNumber}
                     </li>
                   ))
                 ) : (
@@ -543,27 +734,28 @@ export default function CreateBillPage() {
         {/* Row 2: Customer Details */}
         <div className="bill-row row-2">
           <div className="form-group">
-            <label>CUSTOMER NAME</label>
+            <label>Customer Name</label>
             <input type="text" value={selectedCustomer.customerName} onChange={(e) => setSelectedCustomer({ ...selectedCustomer, customerName: e.target.value })} className="form-control" />
           </div>
           {totals.gstPercentage > 0 && (
             <div className="form-group">
-              <label>GST NO</label>
+              <label>GST No</label>
               <input type="text" value={selectedCustomer.customerGstNo} onChange={(e) => setSelectedCustomer({ ...selectedCustomer, customerGstNo: e.target.value })} className="form-control" placeholder="Enter GSTIN" />
             </div>
           )}
           <div className="form-group">
-            <label>MOBILE NUMBER</label>
+            <label>Mobile Number</label>
             <input type="text" value={selectedCustomer.customerMobileNo} onChange={(e) => setSelectedCustomer({ ...selectedCustomer, customerMobileNo: e.target.value })} className="form-control" />
           </div>
           <div className="form-group">
-            <label>EMAIL</label>
+            <label>Email</label>
             <input type="email" value={selectedCustomer.customerEmail} onChange={(e) => setSelectedCustomer({ ...selectedCustomer, customerEmail: e.target.value })} className="form-control" />
           </div>
         </div>
 
         {/* Row 3: Particulars and Summary */}
         <div className="bill-row row-3">
+
           {/* Left Side: Particulars Table (60%) */}
           <div className="particulars-section">
             <div className="table-responsive">
@@ -579,7 +771,7 @@ export default function CreateBillPage() {
                   </tr>
                 </thead>
                 <tbody>
-                  {particularsList.map((item) => (
+                  {particularsList.map((item, index) => (
                     <tr key={item.id}>
                       <td>
                         {!item.isFilled ? (
@@ -602,10 +794,18 @@ export default function CreateBillPage() {
                                 className="customer-dropdown-list particular-dropdown-list"
                                 style={{
                                   position: 'absolute',
-                                  top: '100%', left: 0, right: 0,
-                                  zIndex: 1000, maxHeight: '200px', overflowY: 'auto',
-                                  background: '#fff', border: '1px solid #ccc',
-                                  borderRadius: '4px', listStyle: 'none', padding: 0, margin: 0,
+                                  top: '100%',
+                                  left: 0,
+                                  right: 0,
+                                  zIndex: 1000,
+                                  maxHeight: '200px',
+                                  overflowY: 'auto',
+                                  background: '#fff',
+                                  border: '1px solid #ccc',
+                                  borderRadius: '4px',
+                                  listStyle: 'none',
+                                  padding: 0,
+                                  margin: 0,
                                   boxShadow: '0 4px 12px rgba(0,0,0,0.15)'
                                 }}
                               >
@@ -662,10 +862,11 @@ export default function CreateBillPage() {
                             value={item.individualPrice}
                             onChange={(e) => updateParticularRow(item.id, 'individualPrice', Number(e.target.value))}
                             className="form-control price-input"
+                            onWheel={(e) => e.target.blur()}
                           />
                         ) : '-'}
                       </td>
-                      <td className={item.isFilled ? "fw-bold" : ""}>
+                      <td className={item.isFilled ? 'fw-bold' : ''}>
                         {item.isFilled ? `₹${item.totalPrice.toFixed(2)}` : '-'}
                       </td>
                       <td>
@@ -713,6 +914,7 @@ export default function CreateBillPage() {
                     value={totals.gstPercentage}
                     onChange={(e) => setTotals({ ...totals, gstPercentage: Number(e.target.value) })}
                     className="form-control gst-input"
+                    onWheel={(e) => e.target.blur()}
                   />
                   <span>%</span>
                   <span className="fw-bold ms-2">₹{totals.gstAmount.toFixed(2)}</span>
@@ -741,6 +943,7 @@ export default function CreateBillPage() {
               </div>
             </div>
           </div>
+
         </div>
 
         {/* Row 4: Payment Details */}
@@ -765,9 +968,18 @@ export default function CreateBillPage() {
               type="number"
               value={enableCredit ? amountPaid : totals.totalToPay > 0 ? totals.totalToPay.toFixed(2) : ''}
               disabled={!enableCredit}
-              onChange={(e) => setAmountPaid(e.target.value)}
+              onChange={(e) => {
+                const val = e.target.value;
+                if (val && Number(val) > totals.totalToPay) {
+                  toast.error('Paid amount cannot exceed total bill amount.');
+                  setAmountPaid(totals.totalToPay.toString());
+                } else {
+                  setAmountPaid(val);
+                }
+              }}
               className={`form-control paid-input ${!enableCredit ? 'bg-light text-muted fw-bold' : ''}`}
-              placeholder={enableCredit ? "Down Payment (₹0)" : `Full (₹${totals.totalToPay.toFixed(2)})`}
+              placeholder={enableCredit ? 'Down Payment (₹0)' : `Full (₹${totals.totalToPay.toFixed(2)})`}
+              onWheel={(e) => e.target.blur()}
             />
           </div>
 
@@ -805,6 +1017,7 @@ export default function CreateBillPage() {
                     value={priceDiscount}
                     onChange={e => setPriceDiscount(e.target.value)}
                     placeholder="Amount"
+                    onWheel={(e) => e.target.blur()}
                   />
                 </div>
                 <div className="form-group d-flex align-items-center m-0">
@@ -816,40 +1029,56 @@ export default function CreateBillPage() {
                     value={tdsAmount}
                     onChange={e => setTdsAmount(e.target.value)}
                     placeholder="Amount"
+                    onWheel={(e) => e.target.blur()}
                   />
                 </div>
               </div>
             )}
           </div>
 
-          <div className="save-actions d-flex align-items-center gap-2">
+          <div className="save-actions d-flex align-items-center">
             <button
-              className="btn btn-primary px-4 me-2"
+              className="btn btn-primary px-4 me-3 d-flex align-items-center gap-2"
               onClick={() => handleSave(false)}
               disabled={isSaving}
               style={{ backgroundColor: '#002142', borderColor: '#002142' }}
             >
-              {isSaving && savingType === 'save' ? (isEditMode ? 'Updating...' : 'Saving...') : (isEditMode ? 'Update' : 'Save')}
+              {isSaving && savingType === 'save' ? (
+                <>
+                  <span className="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                  <span>{isEditMode ? 'Updating...' : 'Saving...'}</span>
+                </>
+              ) : (
+                isEditMode ? 'Update' : 'Save'
+              )}
             </button>
             <button
-              className="btn btn-secondary px-4"
+              className="btn btn-secondary px-4 d-flex align-items-center gap-2"
               onClick={() => handleSave(true)}
               disabled={isSaving}
             >
-              {isSaving && savingType === 'print' ? (isEditMode ? 'Updating & Printing...' : 'Saving & Printing...') : (isEditMode ? 'Update and Print' : 'Save and Print')}
+              {isSaving && savingType === 'print' ? (
+                <>
+                  <span className="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                  <span>{isEditMode ? 'Updating & Printing...' : 'Saving & Printing...'}</span>
+                </>
+              ) : (
+                isEditMode ? 'Update and Print' : 'Save and Print'
+              )}
             </button>
           </div>
         </div>
+
       </div>
 
       {printBill && (
         <ReceiptPopup
           orderDetails={printBill}
-          onClose={() => setPrintBill(null)}
+          onClose={handleCloseReceipt}
         />
       )}
 
-      {/* Customer Credit Notice Modal */}
+      {/* Rich UX/UI Customer Credit Info Modal */}
       {(showCreditModal || isCheckingCredit) && (
         <div className="credit-modal-overlay">
           <div className="credit-modal-card">
@@ -857,41 +1086,98 @@ export default function CreateBillPage() {
               type="button"
               className="credit-modal-close-btn"
               onClick={() => setShowCreditModal(false)}
+              aria-label="Close"
             >
               <i className="bi bi-x-lg"></i>
             </button>
 
             {isCheckingCredit ? (
               <div className="credit-modal-body text-center py-5">
-                <div className="credit-spinner mb-3 mx-auto"></div>
-                <h5 className="fw-bold mt-3">Checking Credit Status...</h5>
+                <div className="credit-loader-wrapper mb-3">
+                  <div className="credit-spinner"></div>
+                  <i className="bi bi-shield-check credit-loader-icon"></i>
+                </div>
+                <h5 className="credit-modal-title fw-bold mt-3">Checking Credit Status...</h5>
+                <p className="credit-modal-subtitle text-muted">Retrieving record for <strong className="text-dark">{customerSearch}</strong></p>
               </div>
             ) : creditInfo ? (
               <div className="credit-modal-body text-center">
-                <div className="credit-icon-badge badge-danger">
-                  <i className="bi bi-exclamation-lg"></i>
-                </div>
-                <h4 className="credit-modal-heading">Customer Credit Notice</h4>
-                <p className="credit-modal-subtext">
-                  Customer <span className="customer-highlight">{customerSearch}</span> has pending credit orders.
-                </p>
-                <div className="credit-kpi-grid">
-                  <div className="credit-kpi-card kpi-balance">
-                    <span className="kpi-label">Balance Due</span>
-                    <span className="kpi-value text-danger">₹{Math.abs(Number(creditInfo.balanceToPay || 0)).toFixed(2)}</span>
+                {creditInfo.iscustomerHasCredit ? (
+                  <div className="fade-in-content">
+                    <div className="credit-icon-badge badge-danger">
+                      <i className="bi bi-exclamation-lg"></i>
+                    </div>
+
+                    <div className="mb-2">
+                      <span className="credit-status-pill pill-danger">
+                        <i className="bi bi-exclamation-circle-fill me-1"></i> Outstanding Credit Found
+                      </span>
+                    </div>
+
+                    <h4 className="credit-modal-heading">Customer Credit Notice</h4>
+                    <p className="credit-modal-subtext">
+                      Customer <span className="customer-highlight">{customerSearch}</span> has pending credit orders.
+                    </p>
+
+                    <div className="credit-kpi-grid">
+                      <div className="credit-kpi-card kpi-orders">
+                        <div className="kpi-icon icon-orders"><i className="bi bi-receipt"></i></div>
+                        <div className="kpi-info">
+                          <span className="kpi-label">Credit Orders</span>
+                          <span className="kpi-value">{creditInfo.creditOrdersCount}</span>
+                        </div>
+                      </div>
+
+                      <div className="credit-kpi-card kpi-balance">
+                        <div className="kpi-icon icon-balance"><i className="bi bi-wallet2"></i></div>
+                        <div className="kpi-info">
+                          <span className="kpi-label">Balance Due</span>
+                          <span className="kpi-value text-danger">₹{Math.abs(Number(creditInfo.balanceToPay || 0)).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                        </div>
+                      </div>
+                    </div>
                   </div>
+                ) : (
+                  <div className="fade-in-content py-2">
+                    <div className="credit-icon-badge badge-success">
+                      <i className="bi bi-check-lg"></i>
+                    </div>
+
+                    <div className="mb-2">
+                      <span className="credit-status-pill pill-success">
+                        <i className="bi bi-check-circle-fill me-1"></i> Account Clear
+                      </span>
+                    </div>
+
+                    <h4 className="credit-modal-heading">No Outstanding Credit</h4>
+                    <p className="credit-modal-subtext">
+                      Customer <span className="customer-highlight">{customerSearch}</span> has no pending credits to pay.
+                    </p>
+                  </div>
+                )}
+
+                <div className="credit-modal-actions mt-4">
+                  <button
+                    className="credit-btn-primary"
+                    onClick={() => setShowCreditModal(false)}
+                  >
+                    <span>Continue to Bill Creation</span>
+                    <i className="bi bi-arrow-right ms-2 fs-5"></i>
+                  </button>
                 </div>
-                <button
-                  className="credit-btn-primary mt-4"
-                  onClick={() => setShowCreditModal(false)}
-                >
-                  Continue to Bill Creation
-                </button>
               </div>
             ) : null}
           </div>
         </div>
       )}
     </div>
+  );
+}
+
+export default function CreateBillPage() {
+  return (
+    <Suspense fallback={<div className="text-center py-5 text-muted">Loading Bill...</div>}>
+      <CreateBillContent />
+    </Suspense>
   );
 }

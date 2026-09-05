@@ -26,6 +26,8 @@ export async function PUT(request, { params }) {
       phoneNumber: body.phoneNumber,
       companyName: body.companyName || '',
       taxNumber: body.taxNumber || '',
+      address: body.address || '',
+      creditAmount: parseFloat(body.creditAmount) || 0,
       isActive: body.isActive !== undefined ? body.isActive : true,
     }).commit();
     return NextResponse.json({ data: updated });

@@ -4,6 +4,7 @@ export default function ReceiptPopup({ orderDetails, onClose }) {
   if (!orderDetails) return null;
 
   const SHOP_NAME = "SYNDICATE PRINTERS";
+  const SHOP_LOGO = "/logo2.png";
   const SHOP_ADDRESS_LINE1 = "BHARATHY SALAI, OPP JAMBAZAR POLICE STATION,";
   const SHOP_ADDRESS_LINE2 = "ROYAPETTAH, CHENNAI - 14";
   const SHOP_CONTACT = "PH: +91 9840031990";
@@ -66,7 +67,10 @@ export default function ReceiptPopup({ orderDetails, onClose }) {
           ) : (
             <div className="receipt-company-header">
               <div className="company-logo-name">
-                <h1 className="company-name">{SHOP_NAME}</h1>
+                {SHOP_LOGO && (
+                  <img src={SHOP_LOGO} alt="Syndicate Printers Logo" className="company-logo" />
+                )}
+                <h1 className="company-name">{SHOP_NAME.toUpperCase()}</h1>
               </div>
               <p className="company-address">{SHOP_ADDRESS_LINE1}</p>
               <p className="company-address">{SHOP_ADDRESS_LINE2}</p>
@@ -86,7 +90,7 @@ export default function ReceiptPopup({ orderDetails, onClose }) {
               <span className="pos-right"><strong>DATE:</strong> {formatDateTime(orderDetails.createdAt)}</span>
             </div>
             <div className="pos-transaction-row">
-              <span className="pos-left"><strong>ATTENDED BY:</strong> {(orderDetails.username || "STAFF").toUpperCase()}</span>
+              <span className="pos-left"><strong>ATTENDED BY:</strong> {(orderDetails.username || "1").toUpperCase()}</span>
               <span className="pos-right"><strong>CUSTOMER:</strong> {(orderDetails.customerName || "CASH CUSTOMER").toUpperCase()}</span>
             </div>
           </div>

@@ -18,7 +18,14 @@ export async function PUT(request, { params }) {
   if (error) return NextResponse.json({ error }, { status: 401 });
   try {
     const body = await request.json();
-    const updated = await sanityClient.patch(params.id).set(body).commit();
+    const updated = await sanityClient.patch(params.id).set({
+      branchId: body.branchId || body.code || '',
+      name: body.name,
+      address: body.address || '',
+      phone: body.phone || '',
+      email: body.email || '',
+      isActive: body.isActive !== undefined ? body.isActive : true,
+    }).commit();
     return NextResponse.json({ data: updated });
   } catch (e) {
     return NextResponse.json({ error: e.message }, { status: 500 });
