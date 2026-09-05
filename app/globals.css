@@ -22869,6 +22869,7 @@ input:disabled + .premium-slider {
 
 
 /* ========== Custom Modal Overlay Fix (Prevents Bootstrap Conflict) ========== */
+.modal-backdrop,
 .modal-backdrop-custom {
   position: fixed !important;
   top: 0 !important;
@@ -22886,6 +22887,7 @@ input:disabled + .premium-slider {
   opacity: 1 !important;
 }
 
+.modal-box,
 .modal-box-custom {
   position: relative !important;
   background: #ffffff !important;
@@ -22897,4 +22899,5 @@ input:disabled + .premium-slider {
   border: 1px solid #e2e8f0 !important;
   max-height: 90vh !important;
   overflow-y: auto !important;
+  margin: auto !important;
 }

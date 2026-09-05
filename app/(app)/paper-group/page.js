@@ -11,7 +11,12 @@ export default function PaperGroupPage() {
   useEffect(() => { fetchGroups(); }, []);
   const fetchGroups = async () => {
     setLoading(true);
-    try { const res = await fetch('/api/paper-groups'); const data = await res.json(); if (data.data) setGroups(data.data); } catch(e) { toast.error('Error'); } finally { setLoading(false); }
+    try {
+      const res = await fetch('/api/paper-groups?listAll=true');
+      const data = await res.json();
+      const list = Array.isArray(data.data) ? data.data : (data.data?.content || []);
+      setGroups(list);
+    } catch(e) { toast.error('Error'); } finally { setLoading(false); }
   };
   const handleSave = async (e) => {
     e.preventDefault();
@@ -20,6 +25,8 @@ export default function PaperGroupPage() {
       if (res.ok) { toast.success('Saved'); setModalOpen(false); setName(''); fetchGroups(); }
     } catch(e) { toast.error('Error'); }
   };
+
+  const groupList = Array.isArray(groups) ? groups : [];
 
   return (
     <div className="fade-in">
@@ -30,7 +37,7 @@ export default function PaperGroupPage() {
       <div className="table-responsive rounded shadow-sm bg-white p-3">
         <table className="data-table w-100">
           <thead><tr><th>#</th><th>Group Name</th></tr></thead>
-          <tbody>{loading ? <tr><td colSpan="2">Loading...</td></tr> : groups.map((g, i) => (<tr key={g.id}><td>{i+1}</td><td className="fw-bold">{g.name}</td></tr>))}</tbody>
+          <tbody>{loading ? <tr><td colSpan="2">Loading...</td></tr> : groupList.map((g, i) => (<tr key={g._id || g.id || i}><td>{i+1}</td><td className="fw-bold">{g.name}</td></tr>))}</tbody>
         </table>
       </div>
       {modalOpen && (

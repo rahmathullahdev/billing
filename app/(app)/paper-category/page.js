@@ -11,7 +11,12 @@ export default function PaperCategoryPage() {
   useEffect(() => { fetchCategories(); }, []);
   const fetchCategories = async () => {
     setLoading(true);
-    try { const res = await fetch('/api/paper-categories'); const data = await res.json(); if (data.data) setCategories(data.data); } catch(e) { toast.error('Error'); } finally { setLoading(false); }
+    try {
+      const res = await fetch('/api/paper-categories?listAll=true');
+      const data = await res.json();
+      const list = Array.isArray(data.data) ? data.data : (data.data?.content || []);
+      setCategories(list);
+    } catch(e) { toast.error('Error'); } finally { setLoading(false); }
   };
   const handleSave = async (e) => {
     e.preventDefault();
@@ -20,6 +25,8 @@ export default function PaperCategoryPage() {
       if (res.ok) { toast.success('Saved'); setModalOpen(false); setName(''); fetchCategories(); }
     } catch(e) { toast.error('Error'); }
   };
+
+  const categoryList = Array.isArray(categories) ? categories : [];
 
   return (
     <div className="fade-in">
@@ -30,7 +37,7 @@ export default function PaperCategoryPage() {
       <div className="table-responsive rounded shadow-sm bg-white p-3">
         <table className="data-table w-100">
           <thead><tr><th>#</th><th>Name</th></tr></thead>
-          <tbody>{loading ? <tr><td colSpan="2">Loading...</td></tr> : categories.map((c, i) => (<tr key={c.id}><td>{i+1}</td><td className="fw-bold">{c.name}</td></tr>))}</tbody>
+          <tbody>{loading ? <tr><td colSpan="2">Loading...</td></tr> : categoryList.map((c, i) => (<tr key={c._id || c.id || i}><td>{i+1}</td><td className="fw-bold">{c.name}</td></tr>))}</tbody>
         </table>
       </div>
       {modalOpen && (

@@ -30,8 +30,24 @@ export async function POST(request) {
   try {
     const body = await request.json();
     const d = new Date();
-    const doc = { _type: 'monthlyExpense', monthlyExpenseId: id(), name: body.name, amount: parseFloat(body.amount) || 0, month: body.month || (d.getMonth() + 1), year: body.year || d.getFullYear(), branch: body.branch || '', category: body.category || '', createdAt: new Date().toISOString() };
-    const created = await sanityClient.create(doc);
-    return NextResponse.json({ data: created }, { status: 201 });
+    const rows = Array.isArray(body.expensive) && body.expensive.length
+      ? body.expensive
+      : [{ name: body.name || body.expenseItem, amount: body.amount, category: body.category, paymentType: body.paymentType, isPaid: body.isPaid }];
+
+    const created = await Promise.all(rows.map((row) => sanityClient.create({
+      _type: 'monthlyExpense',
+      monthlyExpenseId: id(),
+      name: row.name || row.expenseItem || 'Monthly Expense',
+      amount: parseFloat(row.amount) || 0,
+      month: parseInt(body.month || row.month || (d.getMonth() + 1), 10),
+      year: parseInt(body.year || row.year || d.getFullYear(), 10),
+      branch: body.branch || row.branch || '',
+      category: row.category || '',
+      paymentType: row.paymentType || 'Cash',
+      isPaid: !!row.isPaid,
+      date: body.date || new Date().toISOString().split('T')[0],
+      createdAt: new Date().toISOString()
+    })));
+    return NextResponse.json({ data: created.length === 1 ? created[0] : created }, { status: 201 });
   } catch (e) { return NextResponse.json({ error: e.message }, { status: 500 }); }
 }

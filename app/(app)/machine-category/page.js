@@ -13,9 +13,10 @@ export default function MachineCategoryPage() {
   const fetchCategories = async () => {
     setLoading(true);
     try {
-      const res = await fetch('/api/machine-categories');
+      const res = await fetch('/api/machine-categories?listAll=true');
       const data = await res.json();
-      if (data.data) setCategories(data.data);
+      const list = Array.isArray(data.data) ? data.data : (data.data?.content || []);
+      setCategories(list);
     } catch (e) { toast.error('Failed'); } finally { setLoading(false); }
   };
 
@@ -52,7 +53,7 @@ export default function MachineCategoryPage() {
         <table className="data-table w-100">
           <thead><tr><th>#</th><th>Category Name</th><th>Actions</th></tr></thead>
           <tbody>
-            {loading ? <tr><td colSpan="3" className="text-center py-4">Loading...</td></tr> : categories.map((c, i) => (
+            {loading ? <tr><td colSpan="3" className="text-center py-4">Loading...</td></tr> : (Array.isArray(categories) ? categories : []).map((c, i) => (
               <tr key={c.id}>
                 <td>{i + 1}</td>
                 <td className="fw-bold">{c.name}</td>

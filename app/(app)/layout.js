@@ -219,12 +219,25 @@ function MobileTopbar({ onMenuOpen, auth }) {
 function LayoutInner({ children }) {
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [mounted, setMounted] = useState(false);
   const { auth } = useApp();
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  if (!mounted) {
+    return null;
+  }
 
   if (auth.loading) {
     return (
-      <div className="loading-overlay" style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        <div className="spinner-border text-primary" role="status">
+      <div
+        className="loading-overlay"
+        style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+        suppressHydrationWarning
+      >
+        <div className="spinner-border text-primary" role="status" suppressHydrationWarning>
           <span className="visually-hidden">Loading...</span>
         </div>
       </div>
