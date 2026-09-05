@@ -1,0 +1,29 @@
+{
+  "name": "billing-app",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "eslint"
+  },
+  "dependencies": {
+    "@sanity/client": "^8.5.0",
+    "bcryptjs": "^3.0.3",
+    "docx": "^9.7.1",
+    "file-saver": "^2.0.5",
+    "jose": "^6.2.11",
+    "jspdf": "^4.2.1",
+    "jspdf-autotable": "^5.0.8",
+    "next": "16.3.4",
+    "react": "19.2.8",
+    "react-dom": "19.2.8",
+    "react-hot-toast": "^2.6.0",
+    "recharts": "^3.10.1"
+  },
+  "devDependencies": {
+    "eslint": "^9",
+    "eslint-config-next": "16.3.4"
+  }
+}
