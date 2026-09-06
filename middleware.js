@@ -5,7 +5,7 @@ const JWT_SECRET = new TextEncoder().encode(
   process.env.JWT_SECRET || 'syndicate-prints-billing-secret-key-2024-secure-jwt'
 );
 
-const PUBLIC_PATHS = ['/login', '/api/auth/login'];
+const PUBLIC_PATHS = ['/login', '/api/auth/login', '/sanity-studio'];
 
 export async function middleware(request) {
   const { pathname } = request.nextUrl;
