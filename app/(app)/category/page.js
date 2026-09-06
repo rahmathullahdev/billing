@@ -19,7 +19,8 @@ export default function ManageCategoryPage() {
     try {
       const res = await fetch('/api/categories');
       const data = await res.json();
-      if (data.data) setCategories(data.data);
+      const list = Array.isArray(data.data) ? data.data : (data.data?.content || []);
+      setCategories(list);
     } catch (e) {
       toast.error('Failed to load categories');
     } finally {
@@ -71,7 +72,7 @@ export default function ManageCategoryPage() {
 
   return (
     <div className="fade-in">
-      <div className="machine-banner text-center text-white mb-3 p-4 rounded shadow-sm" style={{ background: 'linear-gradient(135deg, #002142, #4f46e5)' }}>
+      <div className="machine-banner text-center text-white mb-3 p-4 rounded shadow-sm">
         <h4 className="fw-bold mb-0 text-uppercase">Item Categories Management</h4>
         <p className="mb-0 text-white-50 small mt-1">Organize products into categories</p>
       </div>

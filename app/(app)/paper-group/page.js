@@ -72,7 +72,7 @@ export default function PaperGroupPage() {
     <div className="paper-group-page fade-in text-dark p-3">
       <div className="manage-header-card mb-3 d-flex justify-content-between align-items-center bg-white p-3 rounded shadow-sm">
         <div className="d-flex align-items-center gap-3">
-          <div className="rounded-circle d-flex align-items-center justify-content-center text-white" style={{ width: 44, height: 44, backgroundColor: '#0369a1' }}>
+          <div className="rounded-circle d-flex align-items-center justify-content-center text-white" style={{ width: 44, height: 44, backgroundColor: '#002142' }}>
             <i className="bi bi-collection fs-5"></i>
           </div>
           <div>
@@ -85,7 +85,7 @@ export default function PaperGroupPage() {
         </button>
       </div>
 
-      <div className="branch-banner position-relative text-center text-white mb-4 rounded px-4 py-4 shadow-sm" style={{ backgroundColor: '#0369a1' }}>
+      <div className="branch-banner position-relative text-center text-white mb-4 rounded px-4 py-4 shadow-sm" style={{ backgroundColor: '#002142' }}>
         <div className="position-absolute top-0 end-0 m-3 px-3 py-1 badge bg-light text-dark shadow-sm fw-bold">Total Groups: {filtered.length}</div>
         <h3 className="fw-bold mb-2 text-uppercase tracking-wider">Paper Groups</h3>
         <p className="mb-0 text-white-50 small">Group paper stocks under their product family</p>
@@ -105,7 +105,7 @@ export default function PaperGroupPage() {
 
       <div className="table-responsive rounded shadow-sm bg-white border-0">
         <table className="particulars-table data-table w-100">
-          <thead><tr style={{ backgroundColor: '#0369a1' }}>
+          <thead><tr style={{ backgroundColor: '#002142' }}>
             <th className="text-center" style={{ width: '60px' }}>#</th>
             <th>GROUP ID</th>
             <th>GROUP NAME</th>

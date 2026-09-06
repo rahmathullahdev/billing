@@ -17,7 +17,8 @@ export default function ManageItemsPage() {
     try {
       const res = await fetch('/api/items');
       const data = await res.json();
-      if (data.data) setItems(data.data);
+      const list = Array.isArray(data.data) ? data.data : (data.data?.content || []);
+      setItems(list);
     } catch (e) { toast.error('Failed to load items'); } finally { setLoading(false); }
   };
 
@@ -52,7 +53,7 @@ export default function ManageItemsPage() {
 
   return (
     <div className="fade-in">
-      <div className="machine-banner text-center text-white mb-3 p-4 rounded shadow-sm" style={{ background: 'linear-gradient(135deg, #002142, #10b981)' }}>
+      <div className="machine-banner text-center text-white mb-3 p-4 rounded shadow-sm">
         <h4 className="fw-bold mb-0 text-uppercase">Items Management</h4>
         <p className="mb-0 text-white-50 small mt-1">Manage catalog inventory items and standard rates</p>
       </div>

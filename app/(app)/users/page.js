@@ -91,7 +91,7 @@ function ManageUsersInner() {
         </button>
       </div>
 
-      <div className="branch-banner position-relative text-center text-white mb-4 rounded px-4 py-4 shadow-sm" style={{ background: 'linear-gradient(135deg, #002142, #dc2626)' }}>
+      <div className="branch-banner position-relative text-center text-white mb-4 rounded px-4 py-4 shadow-sm" style={{ backgroundColor: '#002142' }}>
         <div className="position-absolute top-0 end-0 m-3 px-3 py-1 badge bg-light text-dark shadow-sm fw-bold">Total Users: {filtered.length}</div>
         <h3 className="fw-bold mb-2 text-uppercase tracking-wider">System Users Management</h3>
         <p className="mb-0 text-white-50 small">Admin control of user accounts and permissions</p>

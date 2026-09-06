@@ -75,7 +75,7 @@ export default function ManageEmployeePage() {
     <div className="employees-page fade-in text-dark p-3">
       <div className="manage-header-card mb-3 d-flex justify-content-between align-items-center bg-white p-3 rounded shadow-sm">
         <div className="d-flex align-items-center gap-3">
-          <div className="rounded-circle d-flex align-items-center justify-content-center text-white" style={{ width: 44, height: 44, backgroundColor: '#4338ca' }}>
+          <div className="rounded-circle d-flex align-items-center justify-content-center text-white" style={{ width: 44, height: 44, backgroundColor: '#002142' }}>
             <i className="bi bi-people fs-5"></i>
           </div>
           <div>
@@ -88,7 +88,7 @@ export default function ManageEmployeePage() {
         </button>
       </div>
 
-      <div className="branch-banner position-relative text-center text-white mb-4 rounded px-4 py-4 shadow-sm" style={{ backgroundColor: '#4338ca' }}>
+      <div className="branch-banner position-relative text-center text-white mb-4 rounded px-4 py-4 shadow-sm" style={{ backgroundColor: '#002142' }}>
         <div className="position-absolute top-0 end-0 m-3 px-3 py-1 badge bg-light text-dark shadow-sm fw-bold">Total Employees: {filtered.length}</div>
         <h3 className="fw-bold mb-2 text-uppercase tracking-wider">Employees Management</h3>
         <p className="mb-0 text-white-50 small">Administer staff records, designations and salaries</p>
@@ -108,7 +108,7 @@ export default function ManageEmployeePage() {
 
       <div className="table-responsive rounded shadow-sm bg-white border-0">
         <table className="particulars-table data-table w-100">
-          <thead><tr style={{ backgroundColor: '#4338ca' }}>
+          <thead><tr style={{ backgroundColor: '#002142' }}>
             <th className="text-center" style={{ width: '60px' }}>#</th>
             <th>EMP ID</th>
             <th>FULL NAME</th>
