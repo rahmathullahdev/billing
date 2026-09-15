@@ -178,36 +178,52 @@ function ManageUsersInner() {
 
       {modalOpen && (
         <div className="d-flex align-items-center justify-content-center modal-overlay" onClick={() => setModalOpen(false)}>
-          <div className="bg-white p-4 modal-content-animated shadow-lg" onClick={e => e.stopPropagation()}>
-            <div className="mb-4">
-              <h4 className="fw-bold m-0" style={{ color: '#002142' }}>{editingItem ? 'Edit User' : 'Add New User'}</h4>
+          <div className="bg-white p-0 modal-content-animated shadow-lg overflow-hidden" style={{ maxWidth: '800px', width: '100%' }} onClick={e => e.stopPropagation()}>
+            <div className="p-4 text-white d-flex align-items-center justify-content-between" style={{ backgroundColor: '#002142' }}>
+              <div className="d-flex align-items-center gap-3">
+                <div className="bg-white bg-opacity-25 rounded-circle d-flex align-items-center justify-content-center" style={{ width: 40, height: 40 }}>
+                  <i className={`bi ${editingItem ? 'bi-person-gear' : 'bi-person-plus'} fs-5`}></i>
+                </div>
+                <h5 className="fw-bold m-0 tracking-wide">{editingItem ? 'Edit User Profile' : 'Create New User'}</h5>
+              </div>
+              <button className="btn btn-sm text-white border-0" onClick={() => setModalOpen(false)}><i className="bi bi-x-lg fs-5"></i></button>
             </div>
-            <hr className="mb-4" style={{ borderColor: '#e5e7eb', margin: '0 -1.5rem' }} />
-            <form onSubmit={handleSave}>
-              <div className="form-group mb-4">
-                <label className="fw-bold small text-muted mb-2" style={{ letterSpacing: '0.5px' }}>USERNAME</label>
-                <input type="text" className="form-control form-control-lg custom-input" value={formData.username} onChange={e => setFormData({ ...formData, username: e.target.value })} required />
+            
+            <form onSubmit={handleSave} className="p-4 bg-light">
+              <div className="row g-4 mb-4">
+                <div className="col-md-6">
+                  <label className="fw-bold small text-muted mb-2 d-flex align-items-center gap-2" style={{ letterSpacing: '0.5px' }}><i className="bi bi-person-badge"></i> USERNAME</label>
+                  <input type="text" className="form-control form-control-lg custom-input bg-white" placeholder="Enter unique username" value={formData.username} onChange={e => setFormData({ ...formData, username: e.target.value })} required />
+                </div>
+                <div className="col-md-6">
+                  <label className="fw-bold small text-muted mb-2 d-flex align-items-center gap-2" style={{ letterSpacing: '0.5px' }}><i className="bi bi-envelope"></i> EMAIL ADDRESS</label>
+                  <input type="email" className="form-control form-control-lg custom-input bg-white" placeholder="user@example.com" value={formData.email} onChange={e => setFormData({ ...formData, email: e.target.value })} />
+                </div>
               </div>
-              <div className="form-group mb-4">
-                <label className="fw-bold small text-muted mb-2" style={{ letterSpacing: '0.5px' }}>EMAIL</label>
-                <input type="email" className="form-control form-control-lg custom-input" value={formData.email} onChange={e => setFormData({ ...formData, email: e.target.value })} />
+              
+              <div className="row g-4 mb-4">
+                <div className="col-md-6">
+                  <label className="fw-bold small text-muted mb-2 d-flex align-items-center gap-2" style={{ letterSpacing: '0.5px' }}>
+                    <i className="bi bi-shield-lock"></i> PASSWORD 
+                    {editingItem && <span className="fw-normal text-secondary" style={{ fontSize: '0.7rem' }}>(leave blank to keep)</span>}
+                  </label>
+                  <input type="password" className="form-control form-control-lg custom-input bg-white" placeholder={editingItem ? '******' : 'Enter secure password'} value={formData.password} onChange={e => setFormData({ ...formData, password: e.target.value })} required={!editingItem} />
+                </div>
+                <div className="col-md-6">
+                  <label className="fw-bold small text-muted mb-2 d-flex align-items-center gap-2" style={{ letterSpacing: '0.5px' }}><i className="bi bi-briefcase"></i> ASSIGN ROLE</label>
+                  <select className="form-select form-select-lg custom-input bg-white" value={formData.role} onChange={e => setFormData({ ...formData, role: e.target.value })}>
+                    <option value="ROLE_MANAGER">Manager</option>
+                    <option value="ROLE_EMPLOYEE">Employee</option>
+                    <option value="ROLE_USER">User</option>
+                  </select>
+                </div>
               </div>
-              <div className="form-group mb-4">
-                <label className="fw-bold small text-muted mb-2" style={{ letterSpacing: '0.5px' }}>PASSWORD {editingItem && <span className="fw-normal text-secondary text-lowercase" style={{ letterSpacing: 'normal' }}>(leave blank to keep unchanged)</span>}</label>
-                <input type="password" className="form-control form-control-lg custom-input" value={formData.password} onChange={e => setFormData({ ...formData, password: e.target.value })} required={!editingItem} />
-              </div>
-              <div className="form-group mb-5">
-                <label className="fw-bold small text-muted mb-2" style={{ letterSpacing: '0.5px' }}>ROLE</label>
-                <select className="form-select form-select-lg custom-input" value={formData.role} onChange={e => setFormData({ ...formData, role: e.target.value })}>
-                  <option value="ROLE_ADMIN">Admin</option>
-                  <option value="ROLE_MANAGER">Manager</option>
-                  <option value="ROLE_EMPLOYEE">Employee</option>
-                  <option value="ROLE_USER">User</option>
-                </select>
-              </div>
-              <div className="d-flex justify-content-end gap-3 mt-2">
-                <button type="button" className="btn px-4 py-2 fw-semibold text-white btn-hover-effect border-0" style={{ backgroundColor: '#6b7280', borderRadius: '6px' }} onClick={() => setModalOpen(false)}>Cancel</button>
-                <button type="submit" className="btn px-4 py-2 fw-semibold text-white btn-hover-effect border-0" style={{ backgroundColor: '#002142', borderRadius: '6px' }}>Save User</button>
+
+              <div className="d-flex justify-content-end gap-3 mt-5 pt-3 border-top border-secondary-subtle">
+                <button type="button" className="btn px-4 py-2 fw-semibold text-secondary bg-white border custom-input btn-hover-effect" style={{ borderRadius: '8px' }} onClick={() => setModalOpen(false)}>Cancel</button>
+                <button type="submit" className="btn px-4 py-2 fw-semibold text-white btn-hover-effect border-0" style={{ backgroundColor: '#002142', borderRadius: '8px', boxShadow: '0 4px 10px rgba(0,33,66,0.2)' }}>
+                  <i className="bi bi-check2-circle me-2"></i>{editingItem ? 'Update User' : 'Create User'}
+                </button>
               </div>
             </form>
           </div>
