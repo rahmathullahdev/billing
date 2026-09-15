@@ -17,9 +17,16 @@ export async function PUT(request, { params }) {
   try {
     const body = await request.json();
     const updated = await sanityClient.patch(params.id).set({
-      name: body.name,
+      name: body.firstName + ' ' + body.lastName,
+      firstName: body.firstName,
+      lastName: body.lastName,
       phone: body.phone || '',
       email: body.email || '',
+      role: body.role || 'User',
+      dateOfJoining: body.dateOfJoining || null,
+      dateOfResign: body.dateOfResign || null,
+      photo: body.photo || '',
+      resume: body.resume || '',
       designation: body.designation || '',
       branchName: body.branchName || '',
       branchId: body.branchId || '',

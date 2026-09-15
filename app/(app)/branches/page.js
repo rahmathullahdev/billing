@@ -11,6 +11,7 @@ export default function ManageBranchesPage() {
   const size = 10;
   const [modalOpen, setModalOpen] = useState(false);
   const [editingItem, setEditingItem] = useState(null);
+  const [confirmDelete, setConfirmDelete] = useState(null);
   const [formData, setFormData] = useState({ branchId: '', name: '', code: '', address: '', phone: '', email: '' });
 
   const itemId = (x) => x && (x._id || x.id);
@@ -43,12 +44,17 @@ export default function ManageBranchesPage() {
     } catch (e) { toast.error('Error saving branch'); }
   };
 
-  const handleDelete = async (id) => {
-    if (!confirm('Are you sure you want to delete this branch?')) return;
+  const handleDelete = (id) => {
+    setConfirmDelete(id);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!confirmDelete) return;
     try {
-      const res = await fetch(`/api/branches/${id}`, { method: 'DELETE' });
+      const res = await fetch(`/api/branches/${confirmDelete}`, { method: 'DELETE' });
       if (res.ok) { toast.success('Branch deleted'); fetchBranches(); }
     } catch (e) { toast.error('Failed to delete branch'); }
+    setConfirmDelete(null);
   };
 
   const handleToggle = async (b) => {
@@ -155,23 +161,57 @@ export default function ManageBranchesPage() {
       )}
 
       {modalOpen && (
-        <div className="modal-backdrop-custom" onClick={() => setModalOpen(false)}>
-          <div className="modal-box-custom" onClick={e => e.stopPropagation()}>
-            <h5 className="fw-bold" style={{ color: '#002142' }}>{editingItem ? 'Edit Branch' : 'Add New Branch'}</h5>
-            <hr />
-            <form onSubmit={handleSave}>
-              <div className="row g-2">
-                <div className="col-md-6"><div className="form-group my-2"><label className="fw-bold small text-muted">BRANCH CODE</label><input type="text" className="form-control" value={formData.branchId} onChange={e => setFormData({ ...formData, branchId: e.target.value })} /></div></div>
-                <div className="col-md-6"><div className="form-group my-2"><label className="fw-bold small text-muted">BRANCH NAME</label><input type="text" className="form-control" value={formData.name} onChange={e => setFormData({ ...formData, name: e.target.value })} required /></div></div>
-                <div className="col-md-6"><div className="form-group my-2"><label className="fw-bold small text-muted">ADDRESS</label><input type="text" className="form-control" value={formData.address} onChange={e => setFormData({ ...formData, address: e.target.value })} /></div></div>
-                <div className="col-md-6"><div className="form-group my-2"><label className="fw-bold small text-muted">PHONE</label><input type="text" className="form-control" value={formData.phone} onChange={e => setFormData({ ...formData, phone: e.target.value })} /></div></div>
-                <div className="col-12"><div className="form-group my-2"><label className="fw-bold small text-muted">EMAIL</label><input type="email" className="form-control" value={formData.email} onChange={e => setFormData({ ...formData, email: e.target.value })} /></div></div>
+        <div className="modal-backdrop-custom d-flex align-items-center justify-content-center p-3" style={{ backgroundColor: 'rgba(0,0,0,0.5)', zIndex: 1050 }} onClick={() => setModalOpen(false)}>
+          <div className="bg-white rounded shadow-sm w-100 position-relative" style={{ maxWidth: '900px', overflow: 'hidden' }} onClick={e => e.stopPropagation()}>
+            <div className="d-flex justify-content-between align-items-center p-4">
+              <h4 className="fw-bold mb-0 d-flex align-items-center gap-2" style={{ color: '#1e293b' }}>
+                <i className="bi bi-building-add fs-4"></i> {editingItem ? 'Edit Branch' : 'Add New Branch'}
+              </h4>
+              <button className="btn btn-secondary btn-sm d-flex align-items-center gap-1 text-white shadow-sm" style={{ backgroundColor: '#64748b', border: 'none' }} onClick={() => setModalOpen(false)}>
+                <i className="bi bi-x"></i> Close
+              </button>
+            </div>
+            <form onSubmit={handleSave} className="p-4 pt-2">
+              <div className="row g-4 mb-4">
+                <div className="col-md-6">
+                  <input type="text" className="form-control p-3 shadow-none" style={{ border: '1px solid #e2e8f0', borderRadius: '8px' }} placeholder="Branch Name *" value={formData.name} onChange={e => setFormData({ ...formData, name: e.target.value })} required />
+                </div>
+                <div className="col-md-6">
+                  <input type="text" className="form-control p-3 shadow-none" style={{ border: '1px solid #e2e8f0', borderRadius: '8px' }} placeholder="Branch Code *" value={formData.branchId} onChange={e => setFormData({ ...formData, branchId: e.target.value })} required />
+                </div>
+                <div className="col-md-6">
+                  <input type="text" className="form-control p-3 shadow-none" style={{ border: '1px solid #e2e8f0', borderRadius: '8px' }} placeholder="Phone Number *" value={formData.phone} onChange={e => setFormData({ ...formData, phone: e.target.value })} required />
+                </div>
+                <div className="col-md-6">
+                  <input type="email" className="form-control p-3 shadow-none" style={{ border: '1px solid #e2e8f0', borderRadius: '8px' }} placeholder="Email" value={formData.email} onChange={e => setFormData({ ...formData, email: e.target.value })} />
+                </div>
+                <div className="col-12">
+                  <textarea className="form-control p-3 shadow-none" rows="4" style={{ border: '1px solid #e2e8f0', borderRadius: '8px', resize: 'none' }} placeholder="Address *" value={formData.address} onChange={e => setFormData({ ...formData, address: e.target.value })} required></textarea>
+                </div>
               </div>
-              <div className="d-flex justify-content-end gap-2 mt-4">
-                <button type="button" className="btn btn-secondary btn-sm" onClick={() => setModalOpen(false)}>Cancel</button>
-                <button type="submit" className="btn btn-primary btn-sm" style={{ backgroundColor: '#002142', borderColor: '#002142' }}>Save Branch</button>
+              <div className="d-flex justify-content-end gap-3 border-top pt-4">
+                <button type="button" className="btn btn-light px-4 fw-semibold shadow-sm text-dark" style={{ border: '1px solid #e2e8f0', backgroundColor: '#f8fafc' }} onClick={() => setModalOpen(false)}>Cancel</button>
+                <button type="submit" className="btn btn-primary px-4 fw-semibold shadow-sm d-flex align-items-center gap-2" style={{ backgroundColor: '#1d4ed8', border: 'none' }}>
+                  <i className="bi bi-check-circle"></i> {editingItem ? 'Update Branch' : 'Save Branch'}
+                </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {confirmDelete && (
+        <div className="modal-backdrop-custom d-flex align-items-center justify-content-center p-3" style={{ backgroundColor: 'rgba(0,0,0,0.6)', zIndex: 1100 }} onClick={() => setConfirmDelete(null)}>
+          <div className="bg-white rounded shadow-sm text-center p-4 position-relative" style={{ maxWidth: '400px', width: '100%' }} onClick={e => e.stopPropagation()}>
+            <div style={{ fontSize: '3.5rem', color: '#ef4444', marginBottom: '1rem', lineHeight: '1' }}>
+              <i className="bi bi-exclamation-circle"></i>
+            </div>
+            <h4 className="fw-bold mb-2 text-dark">Delete Branch?</h4>
+            <p className="text-muted mb-4 pb-2">Are you sure you want to delete this branch? This action cannot be undone.</p>
+            <div className="d-flex justify-content-center gap-3">
+              <button className="btn btn-light px-4 fw-semibold shadow-sm text-dark" style={{ border: '1px solid #e2e8f0' }} onClick={() => setConfirmDelete(null)}>Cancel</button>
+              <button className="btn btn-danger px-4 fw-semibold shadow-sm" onClick={handleConfirmDelete}>Yes, Delete</button>
+            </div>
           </div>
         </div>
       )}

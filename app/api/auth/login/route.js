@@ -13,9 +13,9 @@ export async function POST(request) {
 
     const cleanInput = email.trim().toLowerCase();
 
-    // Fetch user from Sanity by email OR username
+    // Fetch user from Sanity by email OR username (null-safe and active only)
     let user = await sanityClient.fetch(
-      `*[_type == "user" && (lower(email) == $input || lower(username) == $input)][0]`,
+      `*[_type == "user" && isActive == true && (lower(coalesce(email, '')) == $input || lower(coalesce(username, '')) == $input)][0]`,
       { input: cleanInput }
     );
 

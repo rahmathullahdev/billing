@@ -47,9 +47,16 @@ export const employeeSchema = {
   type: 'document',
   fields: [
     { name: 'employeeId', title: 'Employee ID', type: 'string', validation: Rule => Rule.required() },
-    { name: 'name', title: 'Name', type: 'string', validation: Rule => Rule.required() },
+    { name: 'name', title: 'Name', type: 'string' },
+    { name: 'firstName', title: 'First Name', type: 'string', validation: Rule => Rule.required() },
+    { name: 'lastName', title: 'Last Name', type: 'string', validation: Rule => Rule.required() },
     { name: 'phone', title: 'Phone', type: 'string' },
     { name: 'email', title: 'Email', type: 'string' },
+    { name: 'role', title: 'Role', type: 'string' },
+    { name: 'dateOfJoining', title: 'Date of Joining', type: 'date' },
+    { name: 'dateOfResign', title: 'Date of Resign', type: 'date' },
+    { name: 'photo', title: 'Photo', type: 'text' },
+    { name: 'resume', title: 'Resume', type: 'text' },
     { name: 'designation', title: 'Designation', type: 'string' },
     { name: 'branchName', title: 'Branch Name', type: 'string' },
     { name: 'branchId', title: 'Branch ID', type: 'string' },
@@ -135,8 +142,7 @@ export const paperGroupSchema = {
   fields: [
     { name: 'groupId', title: 'Group ID', type: 'string', validation: Rule => Rule.required() },
     { name: 'name', title: 'Name', type: 'string', validation: Rule => Rule.required() },
-    { name: 'paperCategory', title: 'Paper Category', type: 'string' },
-    { name: 'paperCategoryId', title: 'Paper Category ID', type: 'string' },
+    { name: 'description', title: 'Description', type: 'text' },
     { name: 'isActive', title: 'Is Active', type: 'boolean', initialValue: true },
   ],
 };
@@ -188,6 +194,7 @@ export const expenseItemSchema = {
     { name: 'name', title: 'Name', type: 'string', validation: Rule => Rule.required() },
     { name: 'type', title: 'Type', type: 'string' },
     { name: 'category', title: 'Category', type: 'string' },
+    { name: 'addInAccount', title: 'Add In Account', type: 'boolean', initialValue: true },
     { name: 'isActive', title: 'Is Active', type: 'boolean', initialValue: true },
   ],
 };

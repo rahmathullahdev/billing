@@ -1,6 +1,8 @@
 'use client';
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import ReceiptPopup from '@/components/ReceiptPopup';
+import BillDetailsModal from '@/components/BillDetailsModal';
 
 export default function DashboardPage() {
   const [data, setData] = useState(null);
@@ -21,8 +23,8 @@ export default function DashboardPage() {
   const [filteredOrders, setFilteredOrders] = useState([]);
 
   // Invoice modal state
-  const [selectedOrder, setSelectedOrder] = useState(null);
-  const [showInvoiceModal, setShowInvoiceModal] = useState(false);
+  const [selectedBill, setSelectedBill] = useState(null);
+  const [printOrder, setPrintOrder] = useState(null);
 
   // Load customers for autocomplete search
   const loadCustomers = async () => {
@@ -250,9 +252,39 @@ export default function DashboardPage() {
     return Array.from({ length: end - start + 1 }, (_, i) => start + i);
   };
 
-  const handlePrintInvoice = (order) => {
-    setSelectedOrder(order);
-    setShowInvoiceModal(true);
+  const handlePrintDirectly = (bill) => {
+    let particulars = [];
+    try {
+      if (typeof bill.particulars === 'string') {
+        particulars = JSON.parse(bill.particulars);
+      } else if (Array.isArray(bill.particulars)) {
+        particulars = bill.particulars;
+      }
+    } catch (error) {
+      console.error('Error parsing particulars:', error);
+    }
+    const items = particulars.length > 0 ? particulars.map((p) => ({
+      name: p.name || p.particularName,
+      quantity: p.qty || 1,
+      price: p.price || 0,
+    })) : (bill.items || []);
+
+    setPrintOrder({
+      invoiceNumber: bill.billNumber || bill.orderId,
+      orderId: bill.orderId || bill.id || bill._id,
+      createdAt: bill.createdAt || bill.date,
+      username: bill.username || bill.employee,
+      customerName: bill.customerName || 'CASH CUSTOMER',
+      grandTotal: bill.grandTotal || bill.total || 0,
+      paidAmount: bill.paidAmount || bill.totalPaid || 0,
+      tax: bill.tax || bill.gstAmount || ((bill.grandTotal || bill.total || 0) - (bill.subtotal || bill.totalWithGst || bill.grandTotal || 0)),
+      items: items,
+      creditType: (bill.paymentDetails?.status || bill.billStatus || '').toUpperCase() === 'CREDIT' ? 'CREDIT' : 'CASH',
+      pendingAmount: bill.creditAmount || 0,
+      taxPercent: bill.taxPercent || (bill.billNumber && String(bill.billNumber).toUpperCase().endsWith('-E') ? 0 : 18),
+      subtotal: bill.subtotal || bill.totalWithGst || bill.grandTotal || bill.total || 0,
+      gstin: bill.customerGstNo || '',
+    });
   };
 
   if (initialLoading) {
@@ -488,30 +520,31 @@ export default function DashboardPage() {
                 <p style={{ color: '#64748b' }}>Loading orders...</p>
               </div>
             ) : (
-              <table className="orders-table">
+              <table className="bills-table data-table">
                 <thead>
                   <tr>
-                    <th>Order Id</th>
-                    <th>Employee name</th>
-                    <th>Customer</th>
-                    <th>Amount</th>
+                    <th className="text-center" style={{ width: '60px' }}>S.No</th>
+                    <th>Bill Number</th>
+                    <th>Customer Name</th>
+                    <th>Amount (₹)</th>
                     <th>Payment</th>
                     <th>Status</th>
-                    <th>Time</th>
-                    <th>Invoice</th>
+                    <th>Created At</th>
+                    <th>Employee</th>
+                    <th className="text-center" style={{ width: '120px' }}>Actions</th>
                   </tr>
                 </thead>
                 <tbody>
                   {paginatedOrders.length > 0 ? (
-                    paginatedOrders.map((order) => {
+                    paginatedOrders.map((order, index) => {
                       const displayId = order.billNumber || (order.orderId ? order.orderId.substring(0, 8) + '...' : '-');
                       const payMethod = order.paymentMethod || 'CASH';
                       const payStatus = order.paymentDetails?.status || 'PAID';
 
                       return (
-                        <tr key={order.orderId || order._id}>
-                          <td style={{ fontWeight: 700, color: '#002142' }}>{displayId}</td>
-                          <td>{order.username || '-'}</td>
+                        <tr key={order.orderId || order._id} className="table-row-hover">
+                          <td className="text-center fw-semibold text-muted">{startIndex + index + 1}</td>
+                          <td className="fw-bold text-primary">{displayId}</td>
                           <td>
                             <div style={{ fontWeight: 600, color: '#1e293b' }}>{order.customerName || '-'}</div>
                             {order.phoneNumber && (
@@ -520,7 +553,7 @@ export default function DashboardPage() {
                               </small>
                             )}
                           </td>
-                          <td style={{ fontWeight: 700 }}>₹{(order.grandTotal || 0).toFixed(2)}</td>
+                          <td className="fw-semibold text-success">₹{(order.grandTotal || 0).toFixed(2)}</td>
                           <td>
                             <span className={`payment-method ${(payMethod || '').toLowerCase()}`}>
                               {payMethod}
@@ -531,7 +564,7 @@ export default function DashboardPage() {
                               {payStatus}
                             </span>
                           </td>
-                          <td style={{ fontSize: '0.85rem', color: '#475569' }}>
+                          <td className="text-muted small">
                             {order.createdAt ? new Date(order.createdAt).toLocaleDateString([], {
                               hour: '2-digit',
                               minute: '2-digit',
@@ -540,13 +573,29 @@ export default function DashboardPage() {
                             }) : '-'}
                           </td>
                           <td>
-                            <button
-                              className="print-invoice-btn"
-                              onClick={() => handlePrintInvoice(order)}
-                              title="Print Invoice"
-                            >
-                              <i className="bi bi-printer-fill"></i>
-                            </button>
+                            {order.username ? (
+                              <span className="badge bg-light text-dark border">{order.username}</span>
+                            ) : (
+                              <span className="text-muted">-</span>
+                            )}
+                          </td>
+                          <td>
+                            <div className="d-flex justify-content-center gap-2">
+                              <button
+                                className="btn btn-sm btn-outline-secondary modern-action-btn"
+                                title="Print"
+                                onClick={() => handlePrintDirectly(order)}
+                              >
+                                <i className="bi bi-printer"></i>
+                              </button>
+                              <button
+                                className="btn btn-sm btn-outline-primary modern-action-btn"
+                                title="View"
+                                onClick={() => setSelectedBill(order)}
+                              >
+                                <i className="bi bi-eye"></i>
+                              </button>
+                            </div>
                           </td>
                         </tr>
                       );
@@ -599,63 +648,19 @@ export default function DashboardPage() {
       </div>
 
       {/* Invoice Modal / Preview */}
-      {showInvoiceModal && selectedOrder && (
-        <div className="modal-backdrop-custom" onClick={() => setShowInvoiceModal(false)}>
-          <div className="modal-box-custom" onClick={(e) => e.stopPropagation()} style={{ maxWidth: 650 }}>
-            <div className="modal-header-custom" style={{ background: '#002142', color: '#fff', padding: '1rem 1.25rem', borderRadius: '12px 12px 0 0', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <h5 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 700 }}>
-                <i className="bi bi-receipt" style={{ color: '#e64051', marginRight: '0.5rem' }}></i>
-                Invoice Details - {selectedOrder.billNumber || selectedOrder.orderId}
-              </h5>
-              <button onClick={() => setShowInvoiceModal(false)} style={{ background: 'transparent', border: 'none', color: '#fff', fontSize: '1.5rem', cursor: 'pointer', lineHeight: 1 }}>&times;</button>
-            </div>
-            <div style={{ padding: '1.5rem' }}>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1.5rem', background: '#f8fafc', padding: '1rem', borderRadius: 8 }}>
-                <div><strong>Customer:</strong> {selectedOrder.customerName || '-'}</div>
-                <div><strong>Phone:</strong> {selectedOrder.phoneNumber || '-'}</div>
-                <div><strong>Employee:</strong> {selectedOrder.username || '-'}</div>
-                <div><strong>Date:</strong> {new Date(selectedOrder.createdAt).toLocaleString()}</div>
-                <div><strong>Payment Method:</strong> {selectedOrder.paymentMethod || 'CASH'}</div>
-                <div><strong>Status:</strong> {selectedOrder.paymentDetails?.status || 'PAID'}</div>
-              </div>
+      {selectedBill && (
+        <BillDetailsModal
+          bill={selectedBill}
+          onClose={() => setSelectedBill(null)}
+        />
+      )}
 
-              {selectedOrder.items && selectedOrder.items.length > 0 && (
-                <table className="data-table" style={{ marginBottom: '1.5rem' }}>
-                  <thead>
-                    <tr>
-                      <th>Particular</th>
-                      <th>Qty</th>
-                      <th>Rate</th>
-                      <th>Amount</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {selectedOrder.items.map((item, idx) => (
-                      <tr key={idx}>
-                        <td>{item.particularName || item.name || 'Item'}</td>
-                        <td>{item.quantity || item.qty || 1}</td>
-                        <td>₹{(item.rate || item.price || 0).toFixed(2)}</td>
-                        <td>₹{(item.amount || item.total || (item.quantity * item.rate) || 0).toFixed(2)}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              )}
-
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '2px dashed #e2e8f0', paddingTop: '1rem' }}>
-                <span style={{ fontSize: '1.2rem', fontWeight: 800, color: '#002142' }}>
-                  Total Amount: ₹{(selectedOrder.grandTotal || 0).toFixed(2)}
-                </span>
-                <div style={{ display: 'flex', gap: '0.5rem' }}>
-                  <button className="btn-primary" onClick={() => window.print()}>
-                    <i className="bi bi-printer"></i> Print Invoice
-                  </button>
-                  <button className="btn-outline" onClick={() => setShowInvoiceModal(false)}>Close</button>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
+      {/* Print Receipt Popup */}
+      {printOrder && (
+        <ReceiptPopup
+          orderDetails={printOrder}
+          onClose={() => setPrintOrder(null)}
+        />
       )}
     </div>
   );

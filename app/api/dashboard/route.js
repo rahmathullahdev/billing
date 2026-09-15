@@ -60,8 +60,24 @@ export async function GET(request) {
     }, {});
     const topEmployee = Object.entries(empRevenue).sort((a, b) => b[1] - a[1])[0] || null;
 
+    function parseParticulars(bill) {
+      if (Array.isArray(bill.particulars)) return bill.particulars;
+      if (bill.particularsJson) {
+        try {
+          const parsed = JSON.parse(bill.particularsJson);
+          return Array.isArray(parsed) ? parsed : [];
+        } catch (e) {
+          return [];
+        }
+      }
+      return [];
+    }
+
     // Recent orders formatted
     const recentOrders = bills.slice(0, 50).map(b => ({
+      ...b,
+      id: b._id,
+      particulars: parseParticulars(b),
       orderId: b._id,
       billNumber: b.billNumber,
       customerName: b.customerName,

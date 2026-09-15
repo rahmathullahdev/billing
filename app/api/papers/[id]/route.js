@@ -24,8 +24,7 @@ export async function PUT(request, ctx) {
       paperCategoryId: body.paperCategoryId || '',
       paperGroup: body.paperGroup || '',
       paperGroupId: body.paperGroupId || '',
-      reamPrice: parseFloat(body.reamPrice) || 0,
-      sheetRate: parseFloat(body.sheetRate) || 0,
+      readingCount: parseInt(body.readingCount) || 0,
       isActive: body.isActive !== undefined ? body.isActive : true,
     }).commit();
     return NextResponse.json({ data: u });

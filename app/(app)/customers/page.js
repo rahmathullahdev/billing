@@ -11,6 +11,7 @@ export default function ManageCustomersPage() {
   const size = 10;
   const [modalOpen, setModalOpen] = useState(false);
   const [editingItem, setEditingItem] = useState(null);
+  const [deleteConfirmId, setDeleteConfirmId] = useState(null);
   const [formData, setFormData] = useState({ name: '', phoneNumber: '', email: '', taxNumber: '', companyName: '', address: '', creditAmount: 0 });
 
   const itemId = (x) => x && (x._id || x.id);
@@ -44,10 +45,10 @@ export default function ManageCustomersPage() {
   };
 
   const handleDelete = async (id) => {
-    if (!confirm('Are you sure you want to delete this customer?')) return;
     try {
       const res = await fetch(`/api/customers/${id}`, { method: 'DELETE' });
       if (res.ok) { toast.success('Customer deleted'); fetchCustomers(); }
+      else { toast.error('Failed to delete customer'); }
     } catch (e) { toast.error('Failed to delete customer'); }
   };
 
@@ -135,7 +136,7 @@ export default function ManageCustomersPage() {
                       <button className="btn btn-sm btn-outline-primary me-2" onClick={() => { setEditingItem(c); setFormData({ name: c.name || '', phoneNumber: c.phoneNumber || '', email: c.email || '', taxNumber: c.taxNumber || '', companyName: c.companyName || '', address: c.address || '', creditAmount: c.creditAmount || 0 }); setModalOpen(true); }}>
                         <i className="bi bi-pencil me-1"></i> Edit
                       </button>
-                      <button className="btn btn-sm btn-outline-danger" onClick={() => handleDelete(itemId(c))}>
+                      <button className="btn btn-sm btn-outline-danger" onClick={() => setDeleteConfirmId(itemId(c))}>
                         <i className="bi bi-trash me-1"></i> Delete
                       </button>
                     </td>
@@ -176,6 +177,24 @@ export default function ManageCustomersPage() {
                 <button type="submit" className="btn btn-primary btn-sm" style={{ backgroundColor: '#002142', borderColor: '#002142' }}>Save Customer</button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {deleteConfirmId && (
+        <div className="modal-backdrop-custom" onClick={() => setDeleteConfirmId(null)}>
+          <div className="modal-box-custom p-4 text-center" onClick={e => e.stopPropagation()} style={{ maxWidth: '400px' }}>
+            <div className="mb-3">
+              <div className="d-inline-flex align-items-center justify-content-center bg-danger bg-opacity-10 rounded-circle" style={{ width: '80px', height: '80px' }}>
+                <i className="bi bi-exclamation-triangle-fill text-danger" style={{ fontSize: '2.5rem' }}></i>
+              </div>
+            </div>
+            <h4 className="fw-bold text-dark mb-2">Delete Customer?</h4>
+            <p className="text-muted mb-4">Are you sure you want to delete this customer? This action cannot be undone and will permanently remove their details.</p>
+            <div className="d-flex justify-content-center gap-3">
+              <button className="btn btn-light px-4 border fw-semibold" onClick={() => setDeleteConfirmId(null)}>Cancel</button>
+              <button className="btn btn-danger px-4 fw-semibold shadow-sm" onClick={() => { handleDelete(deleteConfirmId); setDeleteConfirmId(null); }}>Yes, Delete</button>
+            </div>
           </div>
         </div>
       )}

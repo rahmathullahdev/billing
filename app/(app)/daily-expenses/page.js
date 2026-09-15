@@ -67,6 +67,13 @@ export default function AddDailyExpensesPage() {
     loadLastClosed();
   }, [currentDate, selectedBranch]);
 
+  // Auto-fetch Machine Readings whenever currentDate changes
+  useEffect(() => {
+    if (!initialLoading) {
+      loadMachineReadingsData();
+    }
+  }, [currentDate]);
+
   const loadBranches = async () => {
     try {
       const res = await fetch('/api/branches?page=0&size=100');
@@ -102,20 +109,24 @@ export default function AddDailyExpensesPage() {
 
   const loadMachineReadingsData = async () => {
     try {
-      const res = await fetch('/api/machine-categories?listAll=true');
+      const res = await fetch(`/api/machine-categories/reading-counts?date=${currentDate}`);
       const json = await res.json();
-      const categories = Array.isArray(json.data) ? json.data : (json.data?.content || []);
+      const categories = Array.isArray(json.data) ? json.data : [];
       if (categories.length > 0) {
-        const initialReadings = categories.map((cat) => ({
-          machine: cat.name || '',
-          currentReading: '',
-          oldReading: '0',
-          diff: '0',
-        }));
+        const initialReadings = categories.map((cat) => {
+          const rawOld = cat.totalReadingCount !== undefined && cat.totalReadingCount !== null ? cat.totalReadingCount : 0;
+          const roundedOld = Math.round(rawOld);
+          return {
+            machine: cat.categoryName || '',
+            currentReading: '',
+            oldReading: roundedOld.toString(),
+            diff: '0',
+          };
+        });
         setMachineReadings(initialReadings);
       }
     } catch (error) {
-      console.error('Error loading machine categories:', error);
+      console.error('Error loading machine category reading counts:', error);
     }
   };
 
@@ -538,37 +549,53 @@ export default function AddDailyExpensesPage() {
 
         {/* Daily Type Expense Items Section */}
         {dailyExpenseItems.length > 0 && (
-          <div className="ops-card mb-4">
-            <h4 className="ops-card-title">Itemized Daily Operating Expenses</h4>
-            <div className="expense-items-grid">
-              {dailyExpenseItems.map((item) => {
-                const key = item.expenseItemId || item._id || item.id;
-                return (
-                  <div key={key} className="ops-item-box">
-                    <label className="ops-item-label">{item.name}</label>
-                    <div className="ops-amount-group">
-                      <span className="ops-currency-addon">₹</span>
-                      <input
-                        type="number"
-                        min="0"
-                        onKeyDown={preventNegativeAndExpKeys}
-                        onWheel={disableWheelScroll}
-                        className="ops-amount-input"
-                        placeholder="0.00"
-                        value={dailyItemAmounts[key] || ''}
-                        onChange={(e) => {
-                          const val = e.target.value;
-                          if (val !== '' && parseFloat(val) < 0) return;
-                          setDailyItemAmounts({
-                            ...dailyItemAmounts,
-                            [key]: val,
-                          });
-                        }}
-                      />
-                    </div>
-                  </div>
-                );
-              })}
+          <div className="filter-card mb-4 bg-white rounded-3 shadow-sm border p-3">
+            <div className="d-flex align-items-center gap-2 mb-3">
+              <i className="bi bi-tags-fill text-danger fs-5"></i>
+              <h5 className="mb-0 fw-bold" style={{ color: '#002142' }}>
+                Itemized Daily Operating Expenses
+              </h5>
+            </div>
+            
+            <div className="table-responsive rounded shadow-sm bg-white pb-2">
+              <table className="bills-table data-table w-100 mb-0">
+                <thead>
+                  <tr>
+                    <th style={{ width: '60%' }}>Expense Category</th>
+                    <th style={{ width: '40%' }}>Amount (₹)</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {dailyExpenseItems.map((item) => {
+                    const key = item.expenseItemId || item._id || item.id;
+                    return (
+                      <tr key={key} className="table-row-hover border-bottom">
+                        <td className="fw-semibold text-dark">{item.name}</td>
+                        <td>
+                          <input
+                            type="number"
+                            min="0"
+                            onKeyDown={preventNegativeAndExpKeys}
+                            onWheel={disableWheelScroll}
+                            className="form-control form-control-sm fw-bold shadow-none"
+                            style={{ border: '1px solid #cbd5e1', borderRadius: '6px', color: '#002142' }}
+                            placeholder="0.00"
+                            value={dailyItemAmounts[key] || ''}
+                            onChange={(e) => {
+                              const val = e.target.value;
+                              if (val !== '' && parseFloat(val) < 0) return;
+                              setDailyItemAmounts({
+                                ...dailyItemAmounts,
+                                [key]: val,
+                              });
+                            }}
+                          />
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
             </div>
           </div>
         )}

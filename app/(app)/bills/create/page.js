@@ -296,15 +296,13 @@ function CreateBillContent() {
       fetch(`/api/bills/check-credit?customerName=${encodeURIComponent(customer.name)}`)
         .then(r => r.json())
         .then((res) => {
-          if (res?.data) {
-            setCreditInfo(res.data);
-            if (res.data.iscustomerHasCredit) {
-              setShowCreditModal(true);
-            }
-          }
+          setCreditInfo(res?.data || { iscustomerHasCredit: false });
+          setShowCreditModal(true);
         })
         .catch((err) => {
           console.error('Failed to check customer credit', err);
+          setCreditInfo({ iscustomerHasCredit: false });
+          setShowCreditModal(true);
         })
         .finally(() => {
           setIsCheckingCredit(false);

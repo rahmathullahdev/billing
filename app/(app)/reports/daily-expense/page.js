@@ -39,14 +39,21 @@ const normalizeExpenseMap = (value) => {
   if (!Array.isArray(value)) return value;
 
   return value.reduce((acc, item) => {
-    const name = item.name || item.type || item.expenseItem || item.item || item.title;
-    if (name) acc[name] = Number(item.amount) || 0;
+    const name = item.itemName || item.name || item.type || item.expenseItem || item.item || item.title;
+    if (name) acc[name] = Number(item.amount || item.price) || 0;
     return acc;
   }, {});
 };
 
 const normalizeCredits = (value) => {
   if (!value) return {};
+  if (typeof value === 'string') {
+    try {
+      value = JSON.parse(value);
+    } catch(e) {
+      return {};
+    }
+  }
   if (!Array.isArray(value)) return value;
 
   return value.reduce((acc, item) => {
@@ -73,12 +80,16 @@ const hasValidArrayData = (arr, valField = 'amount') => {
   if (!Array.isArray(arr) || arr.length === 0) return false;
   return arr.some((item) => {
     const val = Number.parseFloat(item[valField]);
+    const val2 = Number.parseFloat(item['oldReading']);
     return (
       (!Number.isNaN(val) && val > 0) ||
+      (!Number.isNaN(val2) && val2 > 0) ||
       Boolean(item.type?.trim?.()) ||
       Boolean(item.reason?.trim?.()) ||
       Boolean(item.refNo?.trim?.()) ||
-      Boolean(item.checkNo?.trim?.())
+      Boolean(item.checkNo?.trim?.()) ||
+      Boolean(item.machine?.trim?.()) ||
+      Boolean(item.category?.trim?.())
     );
   });
 };
@@ -103,8 +114,13 @@ const exportAllToExcel = (data, expenseKeys) => {
     [
       'Date',
       'Branch',
+      'Total Customers',
       'Total Sales',
-      'Cash In Hand',
+      'Paid Sales',
+      'Credit Sales',
+      'Paid Credits',
+      'Expected Cash',
+      'Actual Cash',
       'Last Closed',
       'Shortage',
       ...expenseKeys.map((key) => `Expense: ${key}`),
@@ -113,7 +129,7 @@ const exportAllToExcel = (data, expenseKeys) => {
     ],
   ];
 
-  const totals = { sales: 0, cash: 0, lastClosed: 0, shortage: 0, expenses: 0 };
+  const totals = { customers: 0, sales: 0, paidSales: 0, creditSales: 0, paidCredits: 0, expected: 0, cash: 0, lastClosed: 0, shortage: 0, expenses: 0 };
   const expenseTotals = {};
 
   data.forEach((row) => {
@@ -125,7 +141,12 @@ const exportAllToExcel = (data, expenseKeys) => {
       return amount.toFixed(2);
     });
 
+    totals.customers += Number(row.totalCustomer) || 0;
     totals.sales += Number(row.totalSales) || 0;
+    totals.paidSales += Number(row.paidSales) || 0;
+    totals.creditSales += Number(row.creditSales) || 0;
+    totals.paidCredits += Number(row.paidCredits) || 0;
+    totals.expected += Number(row.cashInHandExpected) || 0;
     totals.cash += Number(row.cashInHand) || 0;
     totals.lastClosed += Number(row.lastClosed) || 0;
     totals.shortage += Number(row.shortage) || 0;
@@ -134,7 +155,12 @@ const exportAllToExcel = (data, expenseKeys) => {
     rows.push([
       formatDate(row.date),
       row.branch || '-',
+      String(row.totalCustomer || 0),
       (Number(row.totalSales) || 0).toFixed(2),
+      (Number(row.paidSales) || 0).toFixed(2),
+      (Number(row.creditSales) || 0).toFixed(2),
+      (Number(row.paidCredits) || 0).toFixed(2),
+      (Number(row.cashInHandExpected) || 0).toFixed(2),
       (Number(row.cashInHand) || 0).toFixed(2),
       (Number(row.lastClosed) || 0).toFixed(2),
       (Number(row.shortage) || 0).toFixed(2),
@@ -147,7 +173,12 @@ const exportAllToExcel = (data, expenseKeys) => {
   rows.push([
     'TOTALS',
     '-',
+    String(totals.customers),
     totals.sales.toFixed(2),
+    totals.paidSales.toFixed(2),
+    totals.creditSales.toFixed(2),
+    totals.paidCredits.toFixed(2),
+    totals.expected.toFixed(2),
     totals.cash.toFixed(2),
     totals.lastClosed.toFixed(2),
     totals.shortage.toFixed(2),
@@ -164,8 +195,13 @@ const exportSingleToExcel = (row) => {
     ['SYNDICATE PRINTS - DAILY OPERATIONS EXPENSE LEDGER'],
     ['Branch', row.branch || '-'],
     ['Date', formatDate(row.date)],
+    ['Total Customers Served', String(row.totalCustomer || 0)],
     ['Total Daily Sales (Earned)', (Number(row.totalSales) || 0).toFixed(2)],
-    ['Cash In Hand', (Number(row.cashInHand) || 0).toFixed(2)],
+    ['Paid Sales', (Number(row.paidSales) || 0).toFixed(2)],
+    ['Credit Sales', (Number(row.creditSales) || 0).toFixed(2)],
+    ['Past Credits Collected Today', (Number(row.paidCredits) || 0).toFixed(2)],
+    ['Cash In Hand Expected', (Number(row.cashInHandExpected) || 0).toFixed(2)],
+    ['Actual Cash In Hand', (Number(row.cashInHand) || 0).toFixed(2)],
     ['Last Closed', (Number(row.lastClosed) || 0).toFixed(2)],
     ['Shortage', (Number(row.shortage) || 0).toFixed(2)],
     [],
@@ -231,23 +267,31 @@ const exportSingleToPdf = (row) => {
 
   doc.setFillColor(248, 250, 252);
   doc.setDrawColor(226, 232, 240);
-  doc.roundedRect(14, y, 182, 34, 3, 3, 'FD');
+  doc.roundedRect(14, y, 182, 44, 3, 3, 'FD');
+  
+  const totalExpense = calculateRecordTotalExpense(row);
+  
   [
-    ['TOTAL SALES', row.totalSales, 18, primary],
-    ['CASH IN HAND', row.cashInHand, 78, [2, 132, 199]],
-    ['TOTAL EXPENSES', calculateRecordTotalExpense(row), 138, red],
-    ['LAST CLOSED', row.lastClosed, 18, [71, 85, 105], 22],
-    ['SHORTAGE', row.shortage, 78, [217, 119, 6], 22],
+    ['TOTAL CUSTOMERS', row.totalCustomer || 0, 18, primary],
+    ['TOTAL SALES', row.totalSales, 53, primary],
+    ['PAID SALES', row.paidSales, 88, primary],
+    ['CREDIT SALES', row.creditSales, 123, [2, 132, 199]],
+    ['PAID CREDITS', row.paidCredits, 158, [5, 150, 105]],
+    ['TOTAL EXPENSES', totalExpense, 18, red, 22],
+    ['EXPECTED CASH', row.cashInHandExpected, 53, [217, 119, 6], 22],
+    ['ACTUAL CASH', row.cashInHand, 88, [2, 132, 199], 22],
+    ['LAST CLOSED', row.lastClosed, 123, [71, 85, 105], 22],
+    ['SHORTAGE', row.shortage, 158, red, 22],
   ].forEach(([label, value, x, color, offset = 0]) => {
     doc.setFontSize(7.5);
     doc.setFont('helvetica', 'bold');
     doc.setTextColor(100, 116, 139);
-    doc.text(label, x, y + 7 + offset);
+    doc.text(label, x, y + 8 + offset);
     doc.setFontSize(10);
     doc.setTextColor(...color);
-    doc.text(`INR ${(Number(value) || 0).toFixed(2)}`, x, y + 14 + offset);
+    doc.text(`INR ${(Number(value) || 0).toFixed(2)}`, x, y + 16 + offset);
   });
-  y += 42;
+  y += 54;
 
   const addSection = (title, headers, body, color = red) => {
     if (!body.length) return;
@@ -425,27 +469,34 @@ export default function DailyExpenseReportPage() {
           </div>
         </div>
 
-        <div className="fp-summary-grid">
+        <div className="kpi-cards-grid mt-3 mb-4">
           {[
-            ['Total Sales (Earned)', selectedRecord.totalSales, 'earned', 'blue', 'bi-graph-up-arrow', 'text-primary'],
-            ['Cash In Hand', selectedRecord.cashInHand, 'cash', 'cyan', 'bi-wallet2', 'text-info'],
-            ['Last Closed', selectedRecord.lastClosed, 'cash', 'blue', 'bi-door-closed-fill', 'text-secondary'],
-            ['Shortage', selectedRecord.shortage, 'spent', 'red', 'bi-exclamation-triangle-fill', 'text-warning'],
-            ['Total Daily Expenses', totalExpense, 'spent', 'red', 'bi-receipt-cutoff', 'text-danger'],
-          ].map(([label, value, cardClass, iconClass, icon, textClass]) => (
-            <div className={`fp-stat-card ${cardClass}`} key={label}>
-              <div className={`fp-stat-icon ${iconClass}`}>
+            ['Total Customers', selectedRecord.totalCustomer || 0, 'icon-blue', 'bi-people-fill'],
+            ['Total Sales', selectedRecord.totalSales, 'icon-blue', 'bi-graph-up-arrow'],
+            ['Paid Sales', selectedRecord.paidSales, 'icon-blue', 'bi-cash-stack'],
+            ['Credit Sales', selectedRecord.creditSales, 'icon-cyan', 'bi-credit-card-2-front'],
+            ['Paid Credits Today', selectedRecord.paidCredits, 'icon-blue', 'bi-box-arrow-in-down-right'],
+            ['Total Expenses', totalExpense, 'icon-red', 'bi-receipt-cutoff'],
+            ['Expected Cash', selectedRecord.cashInHandExpected, 'icon-orange', 'bi-calculator'],
+            ['Actual Cash In Hand', selectedRecord.cashInHand, 'icon-cyan', 'bi-wallet2'],
+            ['Last Closed', selectedRecord.lastClosed, 'icon-blue', 'bi-door-closed-fill'],
+            ['Shortage', selectedRecord.shortage, 'icon-red', 'bi-exclamation-triangle-fill'],
+          ].map(([label, value, iconClass, icon]) => (
+            <div className="kpi-card" key={label}>
+              <div className={`kpi-icon-wrapper ${iconClass}`}>
                 <i className={`bi ${icon}`}></i>
               </div>
-              <div>
-                <div className="fp-stat-title">{label}</div>
-                <div className={`fp-stat-value ${textClass}`}>{currency(value)}</div>
+              <div className="kpi-content">
+                <h3 className="kpi-value">
+                  {label === 'Total Customers' ? value : currency(value)}
+                </h3>
+                <span className="kpi-label">{label}</span>
               </div>
             </div>
           ))}
         </div>
 
-        <div className="fp-details-grid">
+        <div className="fp-details-grid mt-4">
           {hasValidObjectData(selectedRecord.expenses) && (
             <DetailCard title="Catalog Operating Expenses" icon="bi-tags-fill" tone="text-danger" items={Object.entries(selectedRecord.expenses).filter(([, amount]) => Number(amount) > 0).map(([label, amount]) => [label, currency(amount), 'text-danger'])} />
           )}
@@ -470,7 +521,7 @@ export default function DailyExpenseReportPage() {
         </div>
 
         {hasValidArrayData(selectedRecord.machineReadings, 'currentReading') && (
-          <div className="fp-detail-card mb-4">
+          <div className="fp-detail-card mb-4 mt-4">
             <h5 className="fp-detail-card-title text-dark">
               <i className="bi bi-speedometer2 me-2 text-primary"></i> Machine Counter Meter Readings
             </h5>
@@ -489,8 +540,8 @@ export default function DailyExpenseReportPage() {
                     const current = Number(machine.currentReading) || 0;
                     const old = Number(machine.oldReading) || 0;
                     return (
-                      <tr key={`${machine.machine || 'machine'}-${index}`}>
-                        <td className="fw-bold">{machine.machine || 'Machine'}</td>
+                      <tr key={`${machine.machine || machine.category || 'machine'}-${index}`}>
+                        <td className="fw-bold">{machine.machine || machine.category || 'Machine'}</td>
                         <td className="text-primary fw-bold">{current}</td>
                         <td className="text-muted">{old}</td>
                         <td className="fw-bold text-success">+{Math.max(current - old, 0)}</td>
@@ -528,20 +579,8 @@ export default function DailyExpenseReportPage() {
       <div className="filter-card-blue mb-4">
         <div className="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-3">
           <h6 className="fw-bold text-dark mb-0 d-flex align-items-center gap-2">
-            <i className="bi bi-funnel-fill"></i> Filter & Search Ledgers
+            <i className="bi bi-funnel-fill fs-5"></i>
           </h6>
-          <div className="quick-filter-pills">
-            {[
-              ['all', 'All Ledgers'],
-              ['today', 'Today'],
-              ['last7', 'Last 7 Days'],
-              ['thisMonth', 'This Month'],
-            ].map(([type, label]) => (
-              <button key={type} className={`pill-filter-btn ${activeFilterPill === type ? 'active' : ''}`} onClick={() => handleQuickFilter(type)}>
-                {label}
-              </button>
-            ))}
-          </div>
         </div>
 
         <div className="row g-3 align-items-end">
@@ -657,8 +696,8 @@ function DetailCard({ title, icon, tone, items }) {
       <h5 className={`fp-detail-card-title ${tone}`}>
         <i className={`bi ${icon} me-2`}></i> {title}
       </h5>
-      {items.map(([label, value, valueClass]) => (
-        <div key={`${title}-${label}`} className="fp-mini-item">
+      {items.map(([label, value, valueClass], idx) => (
+        <div key={`${title}-${label}-${idx}`} className="fp-mini-item">
           <span className="fp-item-label">{label}</span>
           <span className={`fp-item-value ${valueClass}`}>{value}</span>
         </div>

@@ -11,6 +11,7 @@ function ManageUsersInner() {
   const size = 10;
   const [modalOpen, setModalOpen] = useState(false);
   const [editingItem, setEditingItem] = useState(null);
+  const [deleteConfirmId, setDeleteConfirmId] = useState(null);
   const [formData, setFormData] = useState({ username: '', email: '', password: '', role: 'ROLE_EMPLOYEE', branchName: '', branchId: '' });
 
   const itemId = (x) => x && (x._id || x.id);
@@ -44,11 +45,11 @@ function ManageUsersInner() {
   };
 
   const handleDelete = async (id) => {
-    if (!confirm('Are you sure you want to delete this user?')) return;
     try {
       const res = await fetch(`/api/users/${id}`, { method: 'DELETE' });
       if (res.ok) { toast.success('User deleted'); fetchUsers(); }
     } catch (e) { toast.error('Failed to delete user'); }
+    setDeleteConfirmId(null);
   };
 
   const handleToggle = async (u) => {
@@ -116,20 +117,18 @@ function ManageUsersInner() {
             <th>USERNAME</th>
             <th>EMAIL</th>
             <th>ROLE</th>
-            <th>BRANCH</th>
             <th className="text-center">STATUS</th>
             <th className="text-center">ACTIONS</th>
           </tr></thead>
           <tbody>
-            {loading ? <tr><td colSpan="7" className="text-center py-5">Loading users...</td></tr>
-              : paged.length === 0 ? <tr><td colSpan="7" className="text-center py-5 text-muted">No users found.</td></tr>
+            {loading ? <tr><td colSpan="6" className="text-center py-5">Loading users...</td></tr>
+              : paged.length === 0 ? <tr><td colSpan="6" className="text-center py-5 text-muted">No users found.</td></tr>
                 : paged.map((u, i) => (
                   <tr key={itemId(u) || i}>
                     <td className="text-center fw-bold">{page * size + i + 1}</td>
                     <td className="fw-bold" style={{ color: '#002142' }}>{u.username}</td>
                     <td>{u.email || '-'}</td>
                     <td>{roleBadge(u.role)}</td>
-                    <td>{u.branchName || '-'}</td>
                     <td className="text-center">
                       <button className={`btn btn-sm rounded-pill px-3 ${u.isActive === false ? 'btn-danger' : 'btn-success'}`} onClick={() => handleToggle(u)}>{u.isActive === false ? 'Inactive' : 'Active'}</button>
                     </td>
@@ -137,7 +136,7 @@ function ManageUsersInner() {
                       <button className="btn btn-sm btn-outline-primary me-2" onClick={() => { setEditingItem(u); setFormData({ username: u.username || '', email: u.email || '', password: '', role: u.role || 'ROLE_EMPLOYEE', branchName: u.branchName || '', branchId: u.branchId || '' }); setModalOpen(true); }}>
                         <i className="bi bi-pencil me-1"></i> Edit
                       </button>
-                      <button className="btn btn-sm btn-outline-danger" onClick={() => handleDelete(itemId(u))}>
+                      <button className="btn btn-sm btn-outline-danger" onClick={() => setDeleteConfirmId(itemId(u))}>
                         <i className="bi bi-trash me-1"></i> Delete
                       </button>
                     </td>
@@ -158,31 +157,119 @@ function ManageUsersInner() {
         </div>
       )}
 
+      {deleteConfirmId && (
+        <div className="d-flex align-items-center justify-content-center modal-overlay" onClick={() => setDeleteConfirmId(null)}>
+          <div className="bg-white p-4 text-center modal-content-animated shadow-lg" onClick={e => e.stopPropagation()}>
+            <div className="icon-container mx-auto mb-3 d-flex align-items-center justify-content-center bg-danger bg-opacity-10 rounded-circle" style={{ width: '80px', height: '80px' }}>
+              <i className="bi bi-exclamation-triangle-fill text-danger" style={{ fontSize: '3.5rem' }}></i>
+            </div>
+            <h4 className="fw-bold mb-2 text-dark">Delete User?</h4>
+            <p className="text-muted mb-4 px-2" style={{ fontSize: '1rem' }}>
+              Are you sure you want to delete this user?<br/>
+              This action cannot be undone.
+            </p>
+            <div className="d-flex justify-content-center gap-3">
+              <button className="btn btn-secondary px-4 py-2 fw-semibold btn-hover-effect border-0" style={{ borderRadius: '8px', backgroundColor: '#64748b' }} onClick={() => setDeleteConfirmId(null)}>No</button>
+              <button className="btn btn-danger px-4 py-2 fw-semibold btn-hover-effect border-0 shadow-sm" style={{ borderRadius: '8px', backgroundColor: '#ef4444' }} onClick={() => handleDelete(deleteConfirmId)}>Yes, delete it</button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {modalOpen && (
-        <div className="modal-backdrop-custom" onClick={() => setModalOpen(false)}>
-          <div className="modal-box-custom" onClick={e => e.stopPropagation()}>
-            <h5 className="fw-bold" style={{ color: '#002142' }}>{editingItem ? 'Edit User' : 'Add New User'}</h5>
-            <hr />
+        <div className="d-flex align-items-center justify-content-center modal-overlay" onClick={() => setModalOpen(false)}>
+          <div className="bg-white p-4 modal-content-animated shadow-lg" onClick={e => e.stopPropagation()}>
+            <div className="mb-4">
+              <h4 className="fw-bold m-0" style={{ color: '#002142' }}>{editingItem ? 'Edit User' : 'Add New User'}</h4>
+            </div>
+            <hr className="mb-4" style={{ borderColor: '#e5e7eb', margin: '0 -1.5rem' }} />
             <form onSubmit={handleSave}>
-              <div className="form-group my-2"><label className="fw-bold small text-muted">USERNAME</label><input type="text" className="form-control" value={formData.username} onChange={e => setFormData({ ...formData, username: e.target.value })} required /></div>
-              <div className="form-group my-2"><label className="fw-bold small text-muted">EMAIL</label><input type="email" className="form-control" value={formData.email} onChange={e => setFormData({ ...formData, email: e.target.value })} /></div>
-              <div className="form-group my-2"><label className="fw-bold small text-muted">PASSWORD {editingItem && '(leave blank to keep unchanged)'}</label><input type="password" className="form-control" value={formData.password} onChange={e => setFormData({ ...formData, password: e.target.value })} required={!editingItem} /></div>
-              <div className="form-group my-2"><label className="fw-bold small text-muted">ROLE</label>
-                <select className="form-control" value={formData.role} onChange={e => setFormData({ ...formData, role: e.target.value })}>
+              <div className="form-group mb-4">
+                <label className="fw-bold small text-muted mb-2" style={{ letterSpacing: '0.5px' }}>USERNAME</label>
+                <input type="text" className="form-control form-control-lg custom-input" value={formData.username} onChange={e => setFormData({ ...formData, username: e.target.value })} required />
+              </div>
+              <div className="form-group mb-4">
+                <label className="fw-bold small text-muted mb-2" style={{ letterSpacing: '0.5px' }}>EMAIL</label>
+                <input type="email" className="form-control form-control-lg custom-input" value={formData.email} onChange={e => setFormData({ ...formData, email: e.target.value })} />
+              </div>
+              <div className="form-group mb-4">
+                <label className="fw-bold small text-muted mb-2" style={{ letterSpacing: '0.5px' }}>PASSWORD {editingItem && <span className="fw-normal text-secondary text-lowercase" style={{ letterSpacing: 'normal' }}>(leave blank to keep unchanged)</span>}</label>
+                <input type="password" className="form-control form-control-lg custom-input" value={formData.password} onChange={e => setFormData({ ...formData, password: e.target.value })} required={!editingItem} />
+              </div>
+              <div className="form-group mb-5">
+                <label className="fw-bold small text-muted mb-2" style={{ letterSpacing: '0.5px' }}>ROLE</label>
+                <select className="form-select form-select-lg custom-input" value={formData.role} onChange={e => setFormData({ ...formData, role: e.target.value })}>
                   <option value="ROLE_ADMIN">Admin</option>
                   <option value="ROLE_MANAGER">Manager</option>
                   <option value="ROLE_EMPLOYEE">Employee</option>
                   <option value="ROLE_USER">User</option>
                 </select>
               </div>
-              <div className="d-flex justify-content-end gap-2 mt-4">
-                <button type="button" className="btn btn-secondary btn-sm" onClick={() => setModalOpen(false)}>Cancel</button>
-                <button type="submit" className="btn btn-primary btn-sm" style={{ backgroundColor: '#002142', borderColor: '#002142' }}>Save User</button>
+              <div className="d-flex justify-content-end gap-3 mt-2">
+                <button type="button" className="btn px-4 py-2 fw-semibold text-white btn-hover-effect border-0" style={{ backgroundColor: '#6b7280', borderRadius: '6px' }} onClick={() => setModalOpen(false)}>Cancel</button>
+                <button type="submit" className="btn px-4 py-2 fw-semibold text-white btn-hover-effect border-0" style={{ backgroundColor: '#002142', borderRadius: '6px' }}>Save User</button>
               </div>
             </form>
           </div>
         </div>
       )}
+      <style dangerouslySetInnerHTML={{__html: `
+        .modal-overlay {
+          position: fixed;
+          top: 0;
+          left: 0;
+          width: 100%;
+          height: 100%;
+          z-index: 1050;
+          background-color: rgba(15, 23, 42, 0.6);
+          backdrop-filter: blur(4px);
+          animation: fadeIn 0.3s ease-out forwards;
+        }
+        .modal-content-animated {
+          max-width: 480px;
+          width: 90%;
+          border-radius: 12px;
+          animation: scaleUp 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+          transform-origin: center center;
+        }
+        .icon-container {
+          animation: pulseRed 2s infinite;
+        }
+        .custom-input {
+          border-radius: 8px;
+          border: 1px solid #d1d5db;
+          box-shadow: none;
+          font-size: 1rem;
+          padding: 0.75rem 1rem;
+        }
+        .custom-input:focus {
+          border-color: #002142;
+          box-shadow: 0 0 0 3px rgba(0, 33, 66, 0.1);
+        }
+        .btn-hover-effect {
+          transition: all 0.2s ease-in-out;
+        }
+        .btn-hover-effect:hover {
+          transform: translateY(-2px);
+          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        }
+        .btn-danger.btn-hover-effect:hover {
+          box-shadow: 0 4px 12px rgba(239, 68, 68, 0.4) !important;
+        }
+        @keyframes fadeIn {
+          from { opacity: 0; }
+          to { opacity: 1; }
+        }
+        @keyframes scaleUp {
+          from { opacity: 0; transform: scale(0.95); }
+          to { opacity: 1; transform: scale(1); }
+        }
+        @keyframes pulseRed {
+          0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4); }
+          70% { box-shadow: 0 0 0 15px rgba(239, 68, 68, 0); }
+          100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
+        }
+      `}} />
     </div>
   );
 }

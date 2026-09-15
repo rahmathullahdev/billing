@@ -20,8 +20,7 @@ export async function PUT(request, ctx) {
     const body = await request.json();
     const u = await sanityClient.patch(id).set({
       name: body.name,
-      paperCategory: body.paperCategory || '',
-      paperCategoryId: body.paperCategoryId || '',
+      description: body.description || '',
       isActive: body.isActive !== undefined ? body.isActive : true,
     }).commit();
     return NextResponse.json({ data: u });

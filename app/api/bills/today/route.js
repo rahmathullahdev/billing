@@ -47,9 +47,9 @@ export async function GET(request) {
       todayBillsTotal: sum(enriched, 'total'),
       todayOrderCount: enriched.length,
       todayCreditOrderCount: todayCreditOrders.length,
-      todayCreditOrdersAmount: sum(todayCreditOrders, 'creditAmount'),
+      todayCreditOrdersAmount: Number((todayCreditOrders.reduce((s, b) => s + (Number(b.creditAmount) || 0) + (Number(b.creditPaidAmount) || 0), 0)).toFixed(2)),
       creditPaidAmount: sum(todayCreditOrders, 'creditPaidAmount'),
-      creditBalanceAmount: Number((todayCreditOrders.reduce((s, b) => s + ((Number(b.creditAmount) || 0) - (Number(b.creditPaidAmount) || 0)), 0)).toFixed(2)),
+      creditBalanceAmount: sum(todayCreditOrders, 'creditAmount'),
     };
 
     const start = page * size;

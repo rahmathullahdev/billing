@@ -4,19 +4,17 @@ import toast from 'react-hot-toast';
 
 export default function PaperGroupPage() {
   const [groups, setGroups] = useState([]);
-  const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(false);
   const [search, setSearch] = useState('');
-  const [statusFilter, setStatusFilter] = useState('all');
   const [page, setPage] = useState(0);
   const size = 10;
-  const [modalOpen, setModalOpen] = useState(false);
+  const [showAddForm, setShowAddForm] = useState(false);
   const [editingItem, setEditingItem] = useState(null);
-  const [formData, setFormData] = useState({ name: '', paperCategory: '', paperCategoryId: '' });
+  const [formData, setFormData] = useState({ name: '', description: '' });
 
   const itemId = (x) => x && (x._id || x.id);
 
-  useEffect(() => { fetchGroups(); fetchCategories(); }, []);
+  useEffect(() => { fetchGroups(); }, []);
 
   const fetchGroups = async () => {
     setLoading(true);
@@ -28,17 +26,19 @@ export default function PaperGroupPage() {
     finally { setLoading(false); }
   };
 
-  const fetchCategories = async () => {
-    try { const res = await fetch('/api/paper-categories?listAll=true'); const data = await res.json(); setCategories(Array.isArray(data.data) ? data.data : []); } catch (e) { setCategories([]); }
-  };
-
   const handleSave = async (e) => {
     e.preventDefault();
     try {
       const url = editingItem ? `/api/paper-groups/${itemId(editingItem)}` : '/api/paper-groups';
       const method = editingItem ? 'PUT' : 'POST';
       const res = await fetch(url, { method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(formData) });
-      if (res.ok) { toast.success(`Paper group ${editingItem ? 'updated' : 'created'}`); setModalOpen(false); setEditingItem(null); setFormData({ name: '', paperCategory: '', paperCategoryId: '' }); fetchGroups(); }
+      if (res.ok) { 
+        toast.success(`Paper group ${editingItem ? 'updated' : 'created'} successfully`); 
+        setShowAddForm(false); 
+        setEditingItem(null); 
+        setFormData({ name: '', description: '' }); 
+        fetchGroups(); 
+      }
       else { toast.error('Failed to save group'); }
     } catch (e) { toast.error('Error saving group'); }
   };
@@ -51,122 +51,149 @@ export default function PaperGroupPage() {
     } catch (e) { toast.error('Failed to delete group'); }
   };
 
-  const handleToggle = async (g) => {
-    try {
-      const res = await fetch(`/api/paper-groups/${itemId(g)}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ...g, isActive: !g.isActive }) });
-      if (res.ok) { toast.success(g.isActive ? 'Group deactivated' : 'Group activated'); fetchGroups(); }
-    } catch (e) { toast.error('Error updating status'); }
-  };
-
   const filtered = useMemo(() => {
     const q = search.toLowerCase();
-    return groups.filter(g =>
-      (statusFilter === 'all' || String(g.isActive) === String(statusFilter === 'active')) &&
-      (!q || (g.name || '').toLowerCase().includes(q)));
-  }, [groups, search, statusFilter]);
+    return groups.filter(g => !q || (g.name || '').toLowerCase().includes(q));
+  }, [groups, search]);
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / size));
   const paged = filtered.slice(page * size, page * size + size);
 
   return (
-    <div className="paper-group-page fade-in text-dark p-3">
-      <div className="manage-header-card mb-3 d-flex justify-content-between align-items-center bg-white p-3 rounded shadow-sm">
+    <div className="fade-in p-3" style={{ backgroundColor: '#f8fafc', minHeight: '100%' }}>
+      {/* Page Header */}
+      <div className="d-flex justify-content-between align-items-center bg-white p-3 rounded shadow-sm border mb-3">
         <div className="d-flex align-items-center gap-3">
-          <div className="rounded-circle d-flex align-items-center justify-content-center text-white" style={{ width: 44, height: 44, backgroundColor: '#002142' }}>
-            <i className="bi bi-collection fs-5"></i>
+          <div className="rounded d-flex align-items-center justify-content-center text-white" style={{ width: 44, height: 44, backgroundColor: '#002142' }}>
+            <i className="bi bi-briefcase-fill fs-5"></i>
           </div>
           <div>
-            <h4 className="mb-0 fw-bold" style={{ color: '#002142' }}>Manage Paper Groups</h4>
-            <p className="mb-0 text-muted small">Group paper stock under category families</p>
+            <h4 className="mb-0 fw-bold" style={{ color: '#002142' }}>Paper Groups</h4>
+            <p className="mb-0 text-muted small">Manage and organize all paper groups</p>
           </div>
         </div>
-        <button className="btn text-white fw-semibold d-flex align-items-center gap-2" style={{ backgroundColor: '#002142', borderRadius: '8px' }} onClick={() => { setEditingItem(null); setFormData({ name: '', paperCategory: '', paperCategoryId: '' }); setModalOpen(true); }}>
-          <i className="bi bi-plus-lg"></i><span>Add Group</span>
-        </button>
+        {!showAddForm && (
+          <button className="btn text-white fw-semibold d-flex align-items-center gap-2" style={{ backgroundColor: '#002142', borderRadius: '8px' }} onClick={() => { setEditingItem(null); setFormData({ name: '', description: '' }); setShowAddForm(true); }}>
+            <i className="bi bi-plus-lg"></i><span>Add Group</span>
+          </button>
+        )}
       </div>
 
-      <div className="branch-banner position-relative text-center text-white mb-4 rounded px-4 py-4 shadow-sm" style={{ backgroundColor: '#002142' }}>
-        <div className="position-absolute top-0 end-0 m-3 px-3 py-1 badge bg-light text-dark shadow-sm fw-bold">Total Groups: {filtered.length}</div>
-        <h3 className="fw-bold mb-2 text-uppercase tracking-wider">Paper Groups</h3>
-        <p className="mb-0 text-white-50 small">Group paper stocks under their product family</p>
-      </div>
-
-      <div className="bg-white p-3 rounded shadow-sm mb-3 d-flex flex-wrap align-items-center justify-content-between gap-2">
-        <div className="input-group" style={{ maxWidth: '350px' }}>
-          <span className="input-group-text bg-light border-end-0"><i className="bi bi-search text-muted"></i></span>
-          <input type="text" placeholder="Search group..." className="form-control border-start-0 shadow-none" value={search} onChange={e => { setSearch(e.target.value); setPage(0); }} />
-        </div>
-        <div className="btn-group">
-          {['all', 'active', 'inactive'].map(s => (
-            <button key={s} className={`btn btn-sm ${statusFilter === s ? 'btn-dark' : 'btn-outline-dark'}`} onClick={() => { setStatusFilter(s); setPage(0); }}>{s.charAt(0).toUpperCase() + s.slice(1)}</button>
-          ))}
-        </div>
-      </div>
-
-      <div className="table-responsive rounded shadow-sm bg-white border-0">
-        <table className="particulars-table data-table w-100">
-          <thead><tr style={{ backgroundColor: '#002142' }}>
-            <th className="text-center" style={{ width: '60px' }}>#</th>
-            <th>GROUP ID</th>
-            <th>GROUP NAME</th>
-            <th>CATEGORY</th>
-            <th className="text-center">STATUS</th>
-            <th className="text-center">ACTIONS</th>
-          </tr></thead>
-          <tbody>
-            {loading ? <tr><td colSpan="6" className="text-center py-5">Loading...</td></tr>
-              : paged.length === 0 ? <tr><td colSpan="6" className="text-center py-5 text-muted">No groups found.</td></tr>
-                : paged.map((g, i) => (
-                  <tr key={itemId(g) || i}>
-                    <td className="text-center fw-bold">{page * size + i + 1}</td>
-                    <td className="fw-bold text-primary">{g.groupId || '-'}</td>
-                    <td className="fw-bold" style={{ color: '#002142' }}>{g.name}</td>
-                    <td><span className="badge bg-light text-dark border">{g.paperCategory || '-'}</span></td>
-                    <td className="text-center">
-                      <button className={`btn btn-sm rounded-pill px-3 ${g.isActive === false ? 'btn-danger' : 'btn-success'}`} onClick={() => handleToggle(g)}>{g.isActive === false ? 'Inactive' : 'Active'}</button>
-                    </td>
-                    <td className="text-center">
-                      <button className="btn btn-sm btn-outline-primary me-2" onClick={() => { setEditingItem(g); setFormData({ name: g.name, paperCategory: g.paperCategory || '', paperCategoryId: g.paperCategoryId || '' }); setModalOpen(true); }}><i className="bi bi-pencil me-1"></i> Edit</button>
-                      <button className="btn btn-sm btn-outline-danger" onClick={() => handleDelete(itemId(g))}><i className="bi bi-trash me-1"></i> Delete</button>
-                    </td>
-                  </tr>
-                ))}
-          </tbody>
-        </table>
-      </div>
-
-      {filtered.length > size && (
-        <div className="d-flex justify-content-between align-items-center bg-white rounded shadow-sm p-2 mt-3">
-          <small className="text-muted">Showing {page * size + 1}-{Math.min((page + 1) * size, filtered.length)} of {filtered.length}</small>
-          <div className="d-flex gap-1">
-            <button className="btn btn-sm btn-outline-dark" disabled={page === 0} onClick={() => setPage(page - 1)}><i className="bi bi-chevron-left"></i></button>
-            <span className="align-self-center px-2 fw-bold">{page + 1} / {totalPages}</span>
-            <button className="btn btn-sm btn-outline-dark" disabled={page >= totalPages - 1} onClick={() => setPage(page + 1)}><i className="bi bi-chevron-right"></i></button>
+      {showAddForm && (
+        <div className="bg-white rounded shadow-sm border mb-4">
+          <div className="d-flex justify-content-between align-items-center p-3 border-bottom">
+            <h6 className="mb-0 fw-bold" style={{ color: '#002142' }}><i className="bi bi-inboxes me-2"></i>{editingItem ? 'Edit Group' : 'Add New Group'}</h6>
+            <button className="btn btn-sm btn-outline-secondary d-flex align-items-center gap-1" onClick={() => setShowAddForm(false)}>
+              <i className="bi bi-x-lg"></i> Close
+            </button>
           </div>
-        </div>
-      )}
-
-      {modalOpen && (
-        <div className="modal-backdrop-custom" onClick={() => setModalOpen(false)}>
-          <div className="modal-box-custom" onClick={e => e.stopPropagation()}>
-            <h5 className="fw-bold" style={{ color: '#002142' }}>{editingItem ? 'Edit Group' : 'Add New Group'}</h5>
-            <hr />
-            <form onSubmit={handleSave}>
-              <div className="form-group my-2"><label className="fw-bold small text-muted">GROUP NAME</label><input type="text" className="form-control" value={formData.name} onChange={e => setFormData({ ...formData, name: e.target.value })} required /></div>
-              <div className="form-group my-2"><label className="fw-bold small text-muted">CATEGORY</label>
-                <select className="form-control" value={formData.paperCategoryId || ''} onChange={e => { const c = categories.find(c => itemId(c) === e.target.value); setFormData({ ...formData, paperCategoryId: e.target.value, paperCategory: c ? (c.name || '') : '' }); }}>
-                  <option value="">-- Select Category --</option>
-                  {categories.map(c => <option key={itemId(c)} value={itemId(c)}>{c.name}</option>)}
-                </select>
+          
+          <div className="p-4">
+            <div className="d-flex align-items-center gap-3 mb-4 p-3 rounded border" style={{ backgroundColor: '#f8fafc' }}>
+              <div className="rounded d-flex align-items-center justify-content-center text-white" style={{ width: 40, height: 40, backgroundColor: '#002142' }}>
+                <i className="bi bi-briefcase-fill fs-5"></i>
               </div>
-              <div className="d-flex justify-content-end gap-2 mt-4">
-                <button type="button" className="btn btn-secondary btn-sm" onClick={() => setModalOpen(false)}>Cancel</button>
-                <button type="submit" className="btn btn-primary btn-sm" style={{ backgroundColor: '#002142', borderColor: '#002142' }}>Save Group</button>
+              <div>
+                <h6 className="mb-0 fw-bold" style={{ color: '#002142' }}>{editingItem ? 'Edit Paper Group' : 'Create New Paper Group'}</h6>
+                <p className="mb-0 text-muted small" style={{ fontSize: '0.8rem' }}>Fill in the group details below</p>
+              </div>
+            </div>
+
+            <form onSubmit={handleSave}>
+              <div className="mb-4">
+                <label className="fw-bold small text-danger mb-2" style={{ fontSize: '0.75rem', letterSpacing: '0.5px' }}>GROUP NAME *</label>
+                <div className="input-group">
+                  <span className="input-group-text bg-white border-end-0 text-muted"><i className="bi bi-inbox"></i></span>
+                  <input type="text" className="form-control border-start-0 ps-0 shadow-none" placeholder="e.g. A4 Group, Standard Offset" value={formData.name} onChange={e => setFormData({ ...formData, name: e.target.value })} required />
+                </div>
+              </div>
+
+              <div className="mb-4">
+                <label className="fw-bold small text-muted mb-2" style={{ fontSize: '0.75rem', letterSpacing: '0.5px' }}>DESCRIPTION</label>
+                <div className="input-group" style={{ alignItems: 'flex-start' }}>
+                  <span className="input-group-text bg-white border-end-0 text-muted pt-2"><i className="bi bi-card-text"></i></span>
+                  <textarea className="form-control border-start-0 ps-0 shadow-none" rows="3" placeholder="Optional description for this paper group" value={formData.description} onChange={e => setFormData({ ...formData, description: e.target.value })}></textarea>
+                </div>
+              </div>
+
+              <div className="d-flex justify-content-end gap-3 mt-4 pt-3 border-top">
+                <button type="button" className="btn btn-outline-secondary d-flex align-items-center gap-2 px-4 rounded-pill" onClick={() => setShowAddForm(false)}>
+                  <i className="bi bi-x"></i> Cancel
+                </button>
+                <button type="submit" className="btn text-white d-flex align-items-center gap-2 px-4 rounded-pill fw-semibold" style={{ backgroundColor: '#002142' }}>
+                  <i className="bi bi-check-circle"></i> {editingItem ? 'Update Group' : 'Save Group'}
+                </button>
               </div>
             </form>
           </div>
         </div>
       )}
+
+      {/* List Section */}
+      <div className="bg-white rounded shadow-sm border p-3">
+        <div className="d-flex justify-content-between align-items-center text-white p-3 rounded mb-4 shadow-sm" style={{ backgroundColor: '#002142' }}>
+          <h6 className="mb-0 fw-bold text-uppercase" style={{ letterSpacing: '1px', fontSize: '0.9rem' }}>PAPER GROUP MANAGEMENT <span className="ms-2 fw-normal text-white-50 text-capitalize" style={{ fontSize: '0.75rem', letterSpacing: '0' }}>Manage and organize all paper groups</span></h6>
+          <span className="badge bg-white text-dark py-2 px-3 rounded-pill fw-bold" style={{ fontSize: '0.75rem' }}>TOTAL GROUPS: {filtered.length}</span>
+        </div>
+
+        <div className="d-flex justify-content-between align-items-center mb-3">
+          <h6 className="mb-0 fw-bold" style={{ color: '#002142' }}>Paper Group Directory</h6>
+          <div className="input-group" style={{ maxWidth: '300px' }}>
+            <span className="input-group-text bg-white border-end-0 text-muted rounded-start-pill ps-3"><i className="bi bi-search"></i></span>
+            <input type="text" placeholder="Search group name..." className="form-control border-start-0 shadow-none rounded-end-pill py-2" style={{ fontSize: '0.85rem' }} value={search} onChange={e => { setSearch(e.target.value); setPage(0); }} />
+          </div>
+        </div>
+
+        <div className="table-responsive">
+          <table className="table align-middle border">
+            <thead>
+              <tr>
+                <th className="text-white fw-bold py-3 text-center border-0" style={{ backgroundColor: '#002142', fontSize: '0.75rem', width: '50px' }}>#</th>
+                <th className="text-white fw-bold py-3 border-0" style={{ backgroundColor: '#002142', fontSize: '0.75rem' }}>GROUP NAME</th>
+                <th className="text-white fw-bold py-3 border-0" style={{ backgroundColor: '#002142', fontSize: '0.75rem' }}>DESCRIPTION</th>
+                <th className="text-white fw-bold py-3 text-end pe-4 border-0" style={{ backgroundColor: '#002142', fontSize: '0.75rem', width: '120px' }}>ACTIONS</th>
+              </tr>
+            </thead>
+            <tbody>
+              {loading ? <tr><td colSpan="4" className="text-center py-5 text-muted">Loading groups...</td></tr>
+                : paged.length === 0 ? <tr><td colSpan="4" className="text-center py-5 text-muted">No groups found.</td></tr>
+                  : paged.map((g, i) => (
+                    <tr key={itemId(g) || i} className="table-row-hover">
+                      <td className="text-center text-muted fw-semibold" style={{ fontSize: '0.85rem' }}>{page * size + i + 1}</td>
+                      <td>
+                        <div className="d-flex align-items-center gap-2">
+                          <div className="rounded d-flex align-items-center justify-content-center text-white shadow-sm" style={{ width: 32, height: 32, backgroundColor: '#002142' }}>
+                            <i className="bi bi-briefcase-fill" style={{ fontSize: '0.8rem' }}></i>
+                          </div>
+                          <span className="fw-bold" style={{ color: '#002142', fontSize: '0.9rem' }}>{g.name}</span>
+                        </div>
+                      </td>
+                      <td className="text-muted" style={{ fontSize: '0.85rem' }}>{g.description || '-'}</td>
+                      <td className="text-end pe-3">
+                        <button className="btn btn-sm btn-outline-secondary me-2 p-1" style={{ width: '28px', height: '28px' }} onClick={() => { setEditingItem(g); setFormData({ name: g.name, description: g.description || '' }); setShowAddForm(true); }} title="Edit"><i className="bi bi-pencil-square" style={{ fontSize: '0.8rem' }}></i></button>
+                        <button className="btn btn-sm btn-outline-danger p-1" style={{ width: '28px', height: '28px', color: '#ff6b6b', borderColor: '#ffe3e3', backgroundColor: '#fff5f5' }} onClick={() => handleDelete(itemId(g))} title="Delete"><i className="bi bi-trash" style={{ fontSize: '0.8rem' }}></i></button>
+                      </td>
+                    </tr>
+                  ))}
+            </tbody>
+          </table>
+        </div>
+
+        {/* Pagination */}
+        <div className="d-flex justify-content-between align-items-center mt-3 pt-3 border-top">
+          <div className="d-flex align-items-center gap-2 text-muted" style={{ fontSize: '0.85rem' }}>
+            <span>Rows per page:</span>
+            <select className="form-select form-select-sm shadow-none" style={{ width: '70px', fontSize: '0.85rem' }} disabled>
+              <option>10</option>
+            </select>
+          </div>
+          <div className="d-flex gap-2 align-items-center">
+            <button className="btn btn-sm text-muted fw-semibold d-flex align-items-center gap-1 border-0" disabled={page === 0} onClick={() => setPage(page - 1)} style={{ fontSize: '0.8rem' }}><i className="bi bi-chevron-left"></i> PREVIOUS</button>
+            <span className="rounded d-flex align-items-center justify-content-center text-white fw-bold shadow-sm" style={{ width: '28px', height: '28px', backgroundColor: '#002142', fontSize: '0.85rem' }}>{page + 1}</span>
+            <button className="btn btn-sm text-muted fw-semibold d-flex align-items-center gap-1 border-0" disabled={page >= totalPages - 1} onClick={() => setPage(page + 1)} style={{ fontSize: '0.8rem' }}>NEXT <i className="bi bi-chevron-right"></i></button>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
