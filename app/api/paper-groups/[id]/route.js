@@ -22,6 +22,7 @@ export async function PUT(request, ctx) {
       name: body.name,
       description: body.description || '',
       isActive: body.isActive !== undefined ? body.isActive : true,
+      updatedAt: new Date().toISOString()
     }).commit();
     return NextResponse.json({ data: u });
   } catch (e) { return NextResponse.json({ error: e.message }, { status: 500 }); }

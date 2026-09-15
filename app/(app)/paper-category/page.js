@@ -10,6 +10,7 @@ export default function PaperCategoryPage() {
   const [page, setPage] = useState(0);
   const size = 10;
   const [modalOpen, setModalOpen] = useState(false);
+  const [sortBy, setSortBy] = useState('newest');
   const [editingItem, setEditingItem] = useState(null);
   const [name, setName] = useState('');
 
@@ -55,10 +56,27 @@ export default function PaperCategoryPage() {
 
   const filtered = useMemo(() => {
     const q = search.toLowerCase();
-    return categories.filter(c =>
+    let result = categories.filter(c =>
       (statusFilter === 'all' || String(c.isActive) === String(statusFilter === 'active')) &&
       (!q || (c.name || '').toLowerCase().includes(q)));
-  }, [categories, search, statusFilter]);
+      
+    result.sort((a, b) => {
+      const nameA = String(a.name || '').trim().toLowerCase();
+      const nameB = String(b.name || '').trim().toLowerCase();
+      
+      if (sortBy === 'name_asc') return nameA < nameB ? -1 : (nameA > nameB ? 1 : 0);
+      if (sortBy === 'name_desc') return nameA > nameB ? -1 : (nameA < nameB ? 1 : 0);
+      
+      const timeA = new Date(a.createdAt || a.updatedAt || 0).getTime();
+      const timeB = new Date(b.createdAt || b.updatedAt || 0).getTime();
+      if (sortBy === 'newest') return timeB - timeA;
+      if (sortBy === 'oldest') return timeA - timeB;
+      
+      return 0;
+    });
+    
+    return result;
+  }, [categories, search, statusFilter, sortBy]);
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / size));
   const paged = filtered.slice(page * size, page * size + size);
@@ -91,10 +109,18 @@ export default function PaperCategoryPage() {
           <span className="input-group-text bg-light border-end-0"><i className="bi bi-search text-muted"></i></span>
           <input type="text" placeholder="Search category..." className="form-control border-start-0 shadow-none" value={search} onChange={e => { setSearch(e.target.value); setPage(0); }} />
         </div>
-        <div className="btn-group">
-          {['all', 'active', 'inactive'].map(s => (
-            <button key={s} className={`btn btn-sm ${statusFilter === s ? 'btn-dark' : 'btn-outline-dark'}`} onClick={() => { setStatusFilter(s); setPage(0); }}>{s.charAt(0).toUpperCase() + s.slice(1)}</button>
-          ))}
+        <div className="d-flex align-items-center gap-3">
+          <select className="form-select form-select-sm w-auto shadow-none cursor-pointer" style={{ borderColor: '#dee2e6' }} value={sortBy} onChange={e => { setSortBy(e.target.value); setPage(0); }}>
+             <option value="newest">Newest First</option>
+             <option value="oldest">Oldest First</option>
+             <option value="name_asc">Name (A-Z)</option>
+             <option value="name_desc">Name (Z-A)</option>
+          </select>
+          <div className="btn-group">
+            {['all', 'active', 'inactive'].map(s => (
+              <button key={s} className={`btn btn-sm ${statusFilter === s ? 'btn-dark' : 'btn-outline-dark'}`} onClick={() => { setStatusFilter(s); setPage(0); }}>{s.charAt(0).toUpperCase() + s.slice(1)}</button>
+            ))}
+          </div>
         </div>
       </div>
 
@@ -102,18 +128,16 @@ export default function PaperCategoryPage() {
         <table className="particulars-table data-table w-100">
           <thead><tr style={{ backgroundColor: '#002142' }}>
             <th className="text-center" style={{ width: '60px' }}>#</th>
-            <th>CATEGORY ID</th>
             <th>CATEGORY NAME</th>
             <th className="text-center">STATUS</th>
             <th className="text-center">ACTIONS</th>
           </tr></thead>
           <tbody>
-            {loading ? <tr><td colSpan="5" className="text-center py-5">Loading...</td></tr>
-              : paged.length === 0 ? <tr><td colSpan="5" className="text-center py-5 text-muted">No categories found.</td></tr>
+            {loading ? <tr><td colSpan="4" className="text-center py-5">Loading...</td></tr>
+              : paged.length === 0 ? <tr><td colSpan="4" className="text-center py-5 text-muted">No categories found.</td></tr>
                 : paged.map((c, i) => (
                   <tr key={itemId(c) || i}>
                     <td className="text-center fw-bold">{page * size + i + 1}</td>
-                    <td className="fw-bold text-primary">{c.categoryId || '-'}</td>
                     <td className="fw-bold" style={{ color: '#002142' }}>{c.name}</td>
                     <td className="text-center">
                       <button className={`btn btn-sm rounded-pill px-3 ${c.isActive === false ? 'btn-danger' : 'btn-success'}`} onClick={() => handleToggle(c)}>{c.isActive === false ? 'Inactive' : 'Active'}</button>

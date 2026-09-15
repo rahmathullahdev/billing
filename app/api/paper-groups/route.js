@@ -28,7 +28,15 @@ export async function POST(request) {
   if (error) return NextResponse.json({ error }, { status: 401 });
   try {
     const body = await request.json();
-    const created = await sanityClient.create({ _type: 'paperGroup', groupId: body.groupId || id(), name: body.name, description: body.description || '', isActive: true });
+    const created = await sanityClient.create({ 
+      _type: 'paperGroup', 
+      groupId: body.groupId || id(), 
+      name: body.name, 
+      description: body.description || '', 
+      isActive: true,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
+    });
     return NextResponse.json({ data: created }, { status: 201 });
   } catch (e) { return NextResponse.json({ error: e.message }, { status: 500 }); }
 }

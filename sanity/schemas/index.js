@@ -144,6 +144,8 @@ export const paperGroupSchema = {
     { name: 'name', title: 'Name', type: 'string', validation: Rule => Rule.required() },
     { name: 'description', title: 'Description', type: 'text' },
     { name: 'isActive', title: 'Is Active', type: 'boolean', initialValue: true },
+    { name: 'createdAt', title: 'Created At', type: 'datetime' },
+    { name: 'updatedAt', title: 'Updated At', type: 'datetime' },
   ],
 };
 
