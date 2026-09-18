@@ -206,9 +206,12 @@ function CreateBillContent() {
         setParticularsList(newParticularsList);
       } else {
         const username = auth?.user?.username || auth?.username || '';
-        if (username) {
+        if (username && username.toLowerCase() !== 'admin') {
           setSelectedEmployee(username);
           setEmployeeSearch(username);
+        } else {
+          setSelectedEmployee('');
+          setEmployeeSearch('');
         }
       }
     } catch (error) {
