@@ -39,13 +39,6 @@ export default function LoginPage() {
   return (
     <div className="login-container">
       <Toaster />
-      {/* Animated Background */}
-      <div className="login-bg-animation">
-        <div className="circle circle-1"></div>
-        <div className="circle circle-2"></div>
-        <div className="circle circle-3"></div>
-      </div>
-
       <div className="login-card">
         {/* Left Side: Form */}
         <div className="login-form-side">
@@ -55,25 +48,32 @@ export default function LoginPage() {
               <Image
                 src="/logo.jpg"
                 alt="Syndicate Prints Logo"
-                width={48}
-                height={48}
+                width={56}
+                height={56}
                 style={{ objectFit: 'contain', margin: '0 auto', display: 'block' }}
                 priority
               />
             </div>
-            <h1 className="brand-title">Syndicate Prints</h1>
-            <p className="brand-subtitle">Professional Printing Solutions</p>
+            <h1 className="brand-title">SYNDICATE PRINTS</h1>
+            <p className="brand-subtitle">Royapettah &bull; Professional Printing Solutions</p>
           </div>
 
           {/* Toggle Admin / Employee */}
           <div className="login-toggle-container">
-            <div className={`toggle-slider ${loginType === 'employee' ? 'right' : ''}`}></div>
-            <button type="button" className={`toggle-btn ${loginType === 'admin' ? 'active' : ''}`} onClick={() => setLoginType('admin')}>
-              <i className="bi bi-person-badge"></i>
+            <button
+              type="button"
+              className={`toggle-btn ${loginType === 'admin' ? 'active' : ''}`}
+              onClick={() => setLoginType('admin')}
+            >
+              <i className="bi bi-shield-lock"></i>
               <span>Admin</span>
             </button>
-            <button type="button" className={`toggle-btn ${loginType === 'employee' ? 'active' : ''}`} onClick={() => setLoginType('employee')}>
-              <i className="bi bi-person"></i>
+            <button
+              type="button"
+              className={`toggle-btn ${loginType === 'employee' ? 'active' : ''}`}
+              onClick={() => setLoginType('employee')}
+            >
+              <i className="bi bi-person-badge"></i>
               <span>Employee</span>
             </button>
           </div>
@@ -81,28 +81,53 @@ export default function LoginPage() {
           {/* Form */}
           <div className="login-form-container">
             <div className="form-header">
-              <h2>{loginType === 'admin' ? 'Admin Login' : 'Employee Login'}</h2>
-              <p>Enter your credentials to continue</p>
+              <h2>{loginType === 'admin' ? 'Admin Portal' : 'Employee Access'}</h2>
+              <p>Enter your credentials to access the billing system</p>
             </div>
 
             <form onSubmit={onSubmit} className="login-form">
               <div className="form-group">
                 <label htmlFor="email">
-                  <i className="bi bi-envelope"></i> Email Address
+                  <span><i className="bi bi-envelope"></i> Email Address</span>
                 </label>
                 <div className="input-wrapper">
-                  <input type="text" name="email" id="email" placeholder="Enter your email" className="form-input" onChange={onChange} value={data.email} required />
-                  <div className="input-icon"><i className="bi bi-person-circle"></i></div>
+                  <input
+                    type="text"
+                    name="email"
+                    id="email"
+                    placeholder="name@syndicateprints.com"
+                    className="form-input"
+                    onChange={onChange}
+                    value={data.email}
+                    required
+                  />
+                  <div className="input-icon">
+                    <i className="bi bi-person"></i>
+                  </div>
                 </div>
               </div>
 
               <div className="form-group">
                 <label htmlFor="password">
-                  <i className="bi bi-lock"></i> Password
+                  <span><i className="bi bi-key"></i> Password</span>
                 </label>
                 <div className="input-wrapper">
-                  <input type={showPassword ? 'text' : 'password'} name="password" id="password" placeholder="Enter your password" className="form-input" onChange={onChange} value={data.password} required />
-                  <div className="input-icon" style={{ cursor: 'pointer', pointerEvents: 'auto' }} onClick={() => setShowPassword(!showPassword)}>
+                  <input
+                    type={showPassword ? 'text' : 'password'}
+                    name="password"
+                    id="password"
+                    placeholder="Enter your password"
+                    className="form-input"
+                    onChange={onChange}
+                    value={data.password}
+                    required
+                  />
+                  <div
+                    className="input-icon"
+                    style={{ cursor: 'pointer', pointerEvents: 'auto' }}
+                    onClick={() => setShowPassword(!showPassword)}
+                    title={showPassword ? 'Hide password' : 'Show password'}
+                  >
                     <i className={showPassword ? 'bi bi-eye' : 'bi bi-eye-slash'}></i>
                   </div>
                 </div>
@@ -110,30 +135,35 @@ export default function LoginPage() {
 
               <div className="form-options">
                 <label className="remember-me">
-                  <input type="checkbox" /> <span>Remember me</span>
+                  <input type="checkbox" />
+                  <span>Remember me</span>
                 </label>
                 <a href="#" className="forgot-password">Forgot Password?</a>
               </div>
 
               <button type="submit" className="login-btn" disabled={loading}>
                 {loading ? (
-                  <><i className="bi bi-arrow-repeat rotating"></i> Signing in...</>
+                  <><i className="bi bi-arrow-repeat rotating"></i> Signing In...</>
                 ) : (
                   <><i className="bi bi-box-arrow-in-right"></i> Sign In</>
                 )}
               </button>
             </form>
           </div>
+
+          <div className="login-footer-note">
+            <p>&copy; {new Date().getFullYear()} Syndicate Prints &bull; Billing & POS System</p>
+          </div>
         </div>
 
-        {/* Right Side: Image */}
-        <div className="login-image-side" style={{ backgroundColor: '#f9f9f9' }}>
+        {/* Right Side: Image Showcase */}
+        <div className="login-image-side">
           <Image
-            src="/side-image.jpeg"
-            alt="Printing Shop POS Illustration"
+            src="/side-image.png"
+            alt="Syndicate Prints POS Dashboard"
             fill
-            sizes="(max-width: 800px) 0vw, 50vw"
-            style={{ objectFit: 'contain' }}
+            sizes="(max-width: 850px) 0vw, 50vw"
+            style={{ objectFit: 'contain', objectPosition: 'center' }}
             priority
           />
         </div>
