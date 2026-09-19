@@ -549,48 +549,70 @@ export default function AddDailyExpensesPage() {
 
         {/* Daily Type Expense Items Section */}
         {dailyExpenseItems.length > 0 && (
-          <div className="filter-card mb-4 bg-white rounded-3 shadow-sm border p-3">
-            <div className="d-flex align-items-center gap-2 mb-3">
-              <i className="bi bi-tags-fill text-danger fs-5"></i>
-              <h5 className="mb-0 fw-bold" style={{ color: '#002142' }}>
+          <div className="daily-expense-premium-card mb-4">
+            <div className="premium-card-header">
+              <div className="header-icon-wrapper">
+                <i className="bi bi-tags-fill"></i>
+              </div>
+              <h5 className="premium-card-title">
                 Itemized Daily Operating Expenses
               </h5>
             </div>
             
-            <div className="table-responsive rounded shadow-sm bg-white pb-2">
-              <table className="bills-table data-table w-100 mb-0">
+            <div className="premium-table-container">
+              <table className="premium-expense-table w-100 mb-0">
                 <thead>
                   <tr>
-                    <th style={{ width: '60%' }}>Expense Category</th>
-                    <th style={{ width: '40%' }}>Amount (₹)</th>
+                    <th style={{ width: '30%', borderRight: '1px solid #e2e8f0' }}>Expense Category</th>
+                    <th style={{ width: '20%', borderRight: '1px solid #e2e8f0' }}>Amount (₹)</th>
+                    <th style={{ width: '30%', borderRight: '1px solid #e2e8f0', paddingLeft: '32px' }}>Expense Category</th>
+                    <th style={{ width: '20%' }}>Amount (₹)</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {dailyExpenseItems.map((item) => {
-                    const key = item.expenseItemId || item._id || item.id;
+                  {Array.from({ length: Math.ceil(dailyExpenseItems.length / 2) }).map((_, index) => {
+                    const item1 = dailyExpenseItems[index * 2];
+                    const item2 = dailyExpenseItems[index * 2 + 1];
+
+                    const renderItemCell = (item, isLeft) => {
+                      if (!item) return <><td className="expense-category-cell" style={isLeft ? { borderRight: '1px solid #e2e8f0' } : { paddingLeft: '32px' }}></td><td className="expense-amount-cell" style={isLeft ? { borderRight: '1px solid #e2e8f0' } : {}}></td></>;
+                      const key = item.expenseItemId || item._id || item.id;
+                      const hasValue = dailyItemAmounts[key] && parseFloat(dailyItemAmounts[key]) > 0;
+                      return (
+                        <>
+                          <td className={`expense-category-cell ${hasValue ? 'has-value-cell' : ''}`} style={isLeft ? { borderRight: '1px solid #e2e8f0' } : { paddingLeft: '32px' }}>
+                            <span className="category-name">{item.name}</span>
+                          </td>
+                          <td className={`expense-amount-cell ${hasValue ? 'has-value-cell' : ''}`} style={isLeft ? { borderRight: '1px solid #e2e8f0' } : {}}>
+                            <div className="premium-amount-input-wrapper">
+                              <span className="currency-symbol">₹</span>
+                              <input
+                                type="number"
+                                min="0"
+                                onKeyDown={preventNegativeAndExpKeys}
+                                onWheel={disableWheelScroll}
+                                className="premium-amount-input"
+                                placeholder="0.00"
+                                value={dailyItemAmounts[key] || ''}
+                                onChange={(e) => {
+                                  const val = e.target.value;
+                                  if (val !== '' && parseFloat(val) < 0) return;
+                                  setDailyItemAmounts({
+                                    ...dailyItemAmounts,
+                                    [key]: val,
+                                  });
+                                }}
+                              />
+                            </div>
+                          </td>
+                        </>
+                      );
+                    };
+
                     return (
-                      <tr key={key} className="table-row-hover border-bottom">
-                        <td className="fw-semibold text-dark">{item.name}</td>
-                        <td>
-                          <input
-                            type="number"
-                            min="0"
-                            onKeyDown={preventNegativeAndExpKeys}
-                            onWheel={disableWheelScroll}
-                            className="form-control form-control-sm fw-bold shadow-none"
-                            style={{ border: '1px solid #cbd5e1', borderRadius: '6px', color: '#002142' }}
-                            placeholder="0.00"
-                            value={dailyItemAmounts[key] || ''}
-                            onChange={(e) => {
-                              const val = e.target.value;
-                              if (val !== '' && parseFloat(val) < 0) return;
-                              setDailyItemAmounts({
-                                ...dailyItemAmounts,
-                                [key]: val,
-                              });
-                            }}
-                          />
-                        </td>
+                      <tr key={index} className="premium-table-row">
+                        {renderItemCell(item1, true)}
+                        {renderItemCell(item2, false)}
                       </tr>
                     );
                   })}

@@ -21,12 +21,7 @@ export async function GET(request) {
     const categories = await sanityClient.fetch(`*[_type == "machineCategory" && isActive == true]`);
 
     if (!todayBills || todayBills.length === 0) {
-      const emptyResult = categories.map(cat => ({
-        categoryId: cat.categoryId || cat._id,
-        categoryName: cat.name,
-        totalReadingCount: 0
-      }));
-      return NextResponse.json({ data: emptyResult });
+      return NextResponse.json({ data: [] });
     }
 
     // 3. Pre-fetch all particulars and map them
@@ -114,7 +109,7 @@ export async function GET(request) {
         categoryName: cat.name,
         totalReadingCount
       };
-    });
+    }).filter(cat => cat.totalReadingCount > 0);
 
     return NextResponse.json({ data: result });
   } catch (e) {

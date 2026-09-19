@@ -94,14 +94,18 @@ export async function POST(request) {
     const cashDepositTotal = (body.cashDeposit || []).reduce((sum, i) => sum + (Number(i.amount) || 0), 0);
 
     let lastClosed = Number(body.lastClosed) || 0;
-    if (lastClosed === 0) {
-      let q = `*[_type == "dailyExpense" && date < "${expenseDate}"`;
-      if (body.branch) {
-        q += ` && branch == "${body.branch}"`;
-      }
-      q += `] | order(date desc)[0]`;
-      const lastDoc = await sanityClient.fetch(q);
-      if (lastDoc) {
+    let lastClosedDate = null;
+    
+    let q = `*[_type == "dailyExpense" && date < "${expenseDate}"`;
+    if (body.branch) {
+      q += ` && branch == "${body.branch}"`;
+    }
+    q += `] | order(date desc)[0]`;
+    
+    const lastDoc = await sanityClient.fetch(q);
+    if (lastDoc) {
+      lastClosedDate = lastDoc.date;
+      if (lastClosed === 0) {
         lastClosed = Number(lastDoc.cashInHand) || 0;
       }
     }
@@ -118,15 +122,20 @@ export async function POST(request) {
       branch: body.branch || '',
       cashInHand: cashInHand,
       lastClosed: lastClosed,
+      lastClosedDate: lastClosedDate,
       shortage: shortage,
       imageUrl: body.imageUrl || body.image || '',
       totalCash: Number(body.totalCash) || 0,
       expensiveJson: JSON.stringify(body.expensive || []),
+      totalExpenses: expensesTotal,
       otherExpensiveJson: JSON.stringify(body.otherExpensive || []),
       advancePaidJson: JSON.stringify(body.advancePaid || []),
+      totalAdvancePaid: advancePaidTotal,
       checkPaymentJson: JSON.stringify(body.checkPayment || []),
       cashDepositJson: JSON.stringify(body.cashDeposit || []),
+      totalCashDeposit: cashDepositTotal,
       otherIncomesJson: JSON.stringify(body.otherIncomes || []),
+      totalOtherIncomes: otherIncomeTotal,
       machineReadingJson: JSON.stringify(body.machineReading || []),
       creditsJson: JSON.stringify(creditsMap),
       totalSales: totalSales,
@@ -138,6 +147,16 @@ export async function POST(request) {
       createdAt: new Date().toISOString(),
     };
     const created = await sanityClient.create(doc);
-    return NextResponse.json({ data: created }, { status: 201 });
+    return NextResponse.json({ 
+      message: 'Daily expenses saved successfully',
+      data: created,
+      calculatedTotals: {
+        totalExpenses: expensesTotal,
+        totalAdvancePaid: advancePaidTotal,
+        totalCashDeposit: cashDepositTotal,
+        totalOtherIncomes: otherIncomeTotal,
+        lastClosedDate: lastClosedDate
+      }
+    }, { status: 201 });
   } catch (e) { return NextResponse.json({ error: e.message }, { status: 500 }); }
 }

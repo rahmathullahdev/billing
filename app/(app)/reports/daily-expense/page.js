@@ -360,6 +360,10 @@ export default function DailyExpenseReportPage() {
           acc.cashInHand += Number(row.cashInHand) || 0;
           acc.lastClosed += Number(row.lastClosed) || 0;
           acc.shortage += Number(row.shortage) || 0;
+          acc.apiTotalExpenses += Number(row.totalExpenses) || 0;
+          acc.apiTotalAdvancePaid += Number(row.totalAdvancePaid) || 0;
+          acc.apiTotalCashDeposit += Number(row.totalCashDeposit) || 0;
+          acc.apiTotalOtherIncomes += Number(row.totalOtherIncomes) || 0;
           expenseKeys.forEach((key) => {
             const amount = Number(row.expenses?.[key]) || 0;
             acc.expenseTotals[key] = (acc.expenseTotals[key] || 0) + amount;
@@ -367,7 +371,7 @@ export default function DailyExpenseReportPage() {
           });
           return acc;
         },
-        { totalSales: 0, cashInHand: 0, lastClosed: 0, shortage: 0, totalExpenses: 0, expenseTotals: {} }
+        { totalSales: 0, cashInHand: 0, lastClosed: 0, shortage: 0, totalExpenses: 0, apiTotalExpenses: 0, apiTotalAdvancePaid: 0, apiTotalCashDeposit: 0, apiTotalOtherIncomes: 0, expenseTotals: {} }
       ),
     [data, expenseKeys]
   );
@@ -627,6 +631,10 @@ export default function DailyExpenseReportPage() {
                 <th className="py-3">Cash In Hand</th>
                 <th className="py-3">Last Closed</th>
                 <th className="py-3">Shortage</th>
+                <th className="py-3 text-danger">Total Expenses</th>
+                <th className="py-3 text-danger">Total Advance</th>
+                <th className="py-3 text-primary">Bank Deposit</th>
+                <th className="py-3 text-success">Other Incomes</th>
                 {expenseKeys.map((key) => <th key={key} className="py-3 text-uppercase">{key}</th>)}
                 <th className="py-3 text-center" style={{ minWidth: '220px' }}>Actions & Ledger Details</th>
               </tr>
@@ -642,8 +650,14 @@ export default function DailyExpenseReportPage() {
                       <td><span className="badge bg-light text-dark border px-2 py-1 fw-bold"><i className="bi bi-building me-1 text-primary"></i>{row.branch || '-'}</span></td>
                       <td className="text-primary fw-bold">{currency(row.totalSales)}</td>
                       <td className="text-info fw-bold">{currency(row.cashInHand)}</td>
-                      <td className="text-secondary fw-bold">{currency(row.lastClosed)}</td>
+                      <td className="text-secondary fw-bold">
+                        {row.lastClosedDate ? `${currency(row.lastClosed)} (${formatDate(row.lastClosedDate)})` : currency(row.lastClosed)}
+                      </td>
                       <td className="text-warning fw-bold">{currency(row.shortage)}</td>
+                      <td className="text-danger fw-bold">{currency(row.totalExpenses || 0)}</td>
+                      <td className="text-danger fw-bold">{currency(row.totalAdvancePaid || 0)}</td>
+                      <td className="text-primary fw-bold">{currency(row.totalCashDeposit || 0)}</td>
+                      <td className="text-success fw-bold">{currency(row.totalOtherIncomes || 0)}</td>
                       {expenseKeys.map((key) => {
                         const amount = Number(row.expenses?.[key]) || 0;
                         return <td key={key} className={`fw-semibold ${amount > 0 ? 'text-danger' : 'text-muted opacity-50'}`}>{currency(amount)}</td>;
@@ -669,6 +683,10 @@ export default function DailyExpenseReportPage() {
                     <td className="text-info py-3">{currency(totals.cashInHand)}</td>
                     <td className="text-secondary py-3">{currency(totals.lastClosed)}</td>
                     <td className="text-warning py-3">{currency(totals.shortage)}</td>
+                    <td className="text-danger py-3 fw-bold">{currency(totals.apiTotalExpenses)}</td>
+                    <td className="text-danger py-3 fw-bold">{currency(totals.apiTotalAdvancePaid)}</td>
+                    <td className="text-primary py-3 fw-bold">{currency(totals.apiTotalCashDeposit)}</td>
+                    <td className="text-success py-3 fw-bold">{currency(totals.apiTotalOtherIncomes)}</td>
                     {expenseKeys.map((key) => <td key={key} className="text-danger py-3">{currency(totals.expenseTotals[key])}</td>)}
                     <td className="py-3">-</td>
                   </tr>

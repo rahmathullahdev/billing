@@ -24857,4 +24857,140 @@ input:disabled + .premium-slider {
 .btn-outline-navy-num:hover {
   background: #f1f5f9;
   color: #002142;
+}
+
+/* Premium Daily Expenses Table Styles */
+.daily-expense-premium-card {
+  background: #ffffff;
+  border-radius: 16px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05), 0 1px 3px rgba(0, 0, 0, 0.02);
+  border: 1px solid rgba(226, 232, 240, 0.8);
+  overflow: hidden;
+  transition: all 0.3s ease;
+}
+
+.premium-card-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 20px 24px;
+  background: linear-gradient(to right, #fafafa, #ffffff);
+  border-bottom: 1px solid rgba(226, 232, 240, 0.6);
+}
+
+.header-icon-wrapper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  background: rgba(220, 38, 38, 0.1);
+  color: #dc2626;
+  border-radius: 10px;
+  font-size: 1.1rem;
+}
+
+.premium-card-title {
+  margin: 0;
+  font-weight: 700;
+  color: #0f172a;
+  font-size: 1.15rem;
+  letter-spacing: -0.01em;
+}
+
+.premium-table-container {
+  padding: 0;
+  background: #ffffff;
+}
+
+.premium-expense-table {
+  border-collapse: separate;
+  border-spacing: 0;
+}
+
+.premium-expense-table th {
+  background: #f8fafc;
+  color: #475569;
+  font-weight: 600;
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 12px 24px;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.premium-table-row {
+  transition: all 0.2s ease;
+}
+
+.premium-table-row:hover {
+  background-color: #f8fafc;
+}
+
+.has-value-cell {
+  background-color: rgba(239, 246, 255, 0.4) !important;
+  transition: all 0.2s ease;
+}
+
+.premium-table-row:hover .has-value-cell {
+  background-color: rgba(219, 234, 254, 0.6) !important;
+}
+
+.expense-category-cell {
+  padding: 14px 24px;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.category-name {
+  font-weight: 600;
+  color: #1e293b;
+  font-size: 0.95rem;
+}
+
+.expense-amount-cell {
+  padding: 10px 24px;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.premium-amount-input-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.premium-amount-input-wrapper .currency-symbol {
+  position: absolute;
+  left: 14px;
+  color: #64748b;
+  font-weight: 600;
+  font-size: 0.9rem;
+  pointer-events: none;
+}
+
+.premium-amount-input {
+  width: 100%;
+  padding: 10px 14px 10px 32px;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  font-weight: 700;
+  color: #0f172a;
+  font-size: 0.95rem;
+  transition: all 0.2s ease;
+  background: #ffffff;
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.02);
+}
+
+.premium-amount-input:focus {
+  outline: none;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15), inset 0 1px 2px rgba(0, 0, 0, 0.02);
+}
+
+.premium-amount-input::placeholder {
+  color: #94a3b8;
+  font-weight: 500;
+}
+
+.premium-table-row:last-child td {
+  border-bottom: none;
 }
