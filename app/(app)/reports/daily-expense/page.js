@@ -267,9 +267,9 @@ const exportSingleToPdf = (row) => {
 
   doc.setFillColor(248, 250, 252);
   doc.setDrawColor(226, 232, 240);
-  doc.roundedRect(14, y, 182, 44, 3, 3, 'FD');
+  doc.roundedRect(14, y, 182, 66, 3, 3, 'FD');
   
-  const totalExpense = calculateRecordTotalExpense(row);
+  const totalExpense = row.totalExpenses || calculateRecordTotalExpense(row);
   
   [
     ['TOTAL CUSTOMERS', row.totalCustomer || 0, 18, primary],
@@ -282,6 +282,10 @@ const exportSingleToPdf = (row) => {
     ['ACTUAL CASH', row.cashInHand, 88, [2, 132, 199], 22],
     ['LAST CLOSED', row.lastClosed, 123, [71, 85, 105], 22],
     ['SHORTAGE', row.shortage, 158, red, 22],
+    ['LAST CLOSED DATE', row.lastClosedDate ? formatDate(row.lastClosedDate) : '-', 18, [71, 85, 105], 44],
+    ['ADVANCE PAID', row.totalAdvancePaid || 0, 53, red, 44],
+    ['CASH DEPOSITS', row.totalCashDeposit || 0, 88, primary, 44],
+    ['OTHER INCOMES', row.totalOtherIncomes || 0, 123, [5, 150, 105], 44],
   ].forEach(([label, value, x, color, offset = 0]) => {
     doc.setFontSize(7.5);
     doc.setFont('helvetica', 'bold');
@@ -289,9 +293,10 @@ const exportSingleToPdf = (row) => {
     doc.text(label, x, y + 8 + offset);
     doc.setFontSize(10);
     doc.setTextColor(...color);
-    doc.text(`INR ${(Number(value) || 0).toFixed(2)}`, x, y + 16 + offset);
+    const textVal = (label === 'TOTAL CUSTOMERS' || label === 'LAST CLOSED DATE') ? String(value) : `INR ${(Number(value) || 0).toFixed(2)}`;
+    doc.text(textVal, x, y + 16 + offset);
   });
-  y += 54;
+  y += 76;
 
   const addSection = (title, headers, body, color = red) => {
     if (!body.length) return;
@@ -480,11 +485,15 @@ export default function DailyExpenseReportPage() {
             ['Paid Sales', selectedRecord.paidSales, 'icon-blue', 'bi-cash-stack'],
             ['Credit Sales', selectedRecord.creditSales, 'icon-cyan', 'bi-credit-card-2-front'],
             ['Paid Credits Today', selectedRecord.paidCredits, 'icon-blue', 'bi-box-arrow-in-down-right'],
-            ['Total Expenses', totalExpense, 'icon-red', 'bi-receipt-cutoff'],
+            ['Total Expenses', selectedRecord.totalExpenses || totalExpense, 'icon-red', 'bi-receipt-cutoff'],
             ['Expected Cash', selectedRecord.cashInHandExpected, 'icon-orange', 'bi-calculator'],
             ['Actual Cash In Hand', selectedRecord.cashInHand, 'icon-cyan', 'bi-wallet2'],
             ['Last Closed', selectedRecord.lastClosed, 'icon-blue', 'bi-door-closed-fill'],
             ['Shortage', selectedRecord.shortage, 'icon-red', 'bi-exclamation-triangle-fill'],
+            ['Last Closed Date', selectedRecord.lastClosedDate ? formatDate(selectedRecord.lastClosedDate) : '-', 'icon-blue', 'bi-calendar-date'],
+            ['Total Advance Paid', selectedRecord.totalAdvancePaid || 0, 'icon-red', 'bi-cash-coin'],
+            ['Total Cash Deposit', selectedRecord.totalCashDeposit || 0, 'icon-primary', 'bi-bank2'],
+            ['Total Other Incomes', selectedRecord.totalOtherIncomes || 0, 'icon-success', 'bi-graph-up-arrow'],
           ].map(([label, value, iconClass, icon]) => (
             <div className="kpi-card" key={label}>
               <div className={`kpi-icon-wrapper ${iconClass}`}>
@@ -492,7 +501,7 @@ export default function DailyExpenseReportPage() {
               </div>
               <div className="kpi-content">
                 <h3 className="kpi-value">
-                  {label === 'Total Customers' ? value : currency(value)}
+                  {label === 'Total Customers' || label === 'Last Closed Date' ? value : currency(value)}
                 </h3>
                 <span className="kpi-label">{label}</span>
               </div>
