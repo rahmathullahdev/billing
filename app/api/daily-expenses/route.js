@@ -1,6 +1,7 @@
-import { NextResponse } from 'next/server';
+﻿import { NextResponse } from 'next/server';
 import { sanityClient } from '@/lib/sanity';
 import { requireAuth } from '@/lib/auth';
+import { cleanString, cleanDate } from '@/lib/validate';
 
 function id() { return 'DE' + Date.now().toString(36) + Math.random().toString(36).substr(2, 4); }
 
@@ -14,14 +15,16 @@ export async function GET(request) {
   const page = parseInt(searchParams.get('page') || '0');
   const size = parseInt(searchParams.get('size') || '20');
   try {
-    let q = `*[_type == "dailyExpense"`;
     const conds = [];
-    if (startDate) conds.push(`date >= "${startDate}"`);
-    if (endDate) conds.push(`date <= "${endDate}"`);
-    if (branch) conds.push(`branch == "${branch}"`);
-    if (conds.length) q += ' && ' + conds.join(' && ');
-    q += `] | order(date desc)`;
-    const all = await sanityClient.fetch(q);
+    const groqParams = {};
+    const start = cleanDate(startDate);
+    const end = cleanDate(endDate);
+    const branchFilter = cleanString(branch, { max: 120 });
+    if (start) { conds.push('date >= $startDate'); groqParams.startDate = start; }
+    if (end) { conds.push('date <= $endDate'); groqParams.endDate = end; }
+    if (branchFilter) { conds.push('branch == $branch'); groqParams.branch = branchFilter; }
+    const q = `*[_type == "dailyExpense"${conds.length ? ' && ' + conds.join(' && ') : ''}] | order(date desc)`;
+    const all = await sanityClient.fetch(q, groqParams);
     const parsed = all.map(e => ({
       ...e,
       expensive: e.expensiveJson ? JSON.parse(e.expensiveJson) : [],
@@ -35,7 +38,7 @@ export async function GET(request) {
     }));
     const s = page * size;
     return NextResponse.json({ data: { content: parsed.slice(s, s + size), totalElements: parsed.length, totalPages: Math.ceil(parsed.length / size), number: page, size } });
-  } catch (e) { return NextResponse.json({ error: e.message }, { status: 500 }); }
+  } catch (e) { console.error('API error:', e); return NextResponse.json({ error: 'Internal server error' }, { status: 500 }); }
 }
 
 export async function POST(request) {
@@ -43,7 +46,7 @@ export async function POST(request) {
   if (error) return NextResponse.json({ error }, { status: 401 });
   try {
     const body = await request.json();
-    const expenseDate = body.date || new Date().toISOString().split('T')[0];
+    const expenseDate = cleanDate(body.date) || new Date().toISOString().split('T')[0];
 
     // 1. Fetch today's bills to calculate sales
     const todayBills = await sanityClient.fetch(
@@ -96,13 +99,16 @@ export async function POST(request) {
     let lastClosed = Number(body.lastClosed) || 0;
     let lastClosedDate = null;
     
-    let q = `*[_type == "dailyExpense" && date < "${expenseDate}"`;
-    if (body.branch) {
-      q += ` && branch == "${body.branch}"`;
+    const branchFilter = cleanString(body.branch, { max: 120 });
+    const lastQParams = { expenseDate };
+    let q = `*[_type == "dailyExpense" && date < $expenseDate`;
+    if (branchFilter) {
+      q += ' && branch == $branch';
+      lastQParams.branch = branchFilter;
     }
     q += `] | order(date desc)[0]`;
     
-    const lastDoc = await sanityClient.fetch(q);
+    const lastDoc = await sanityClient.fetch(q, lastQParams);
     if (lastDoc) {
       lastClosedDate = lastDoc.date;
       if (lastClosed === 0) {
@@ -158,5 +164,5 @@ export async function POST(request) {
         lastClosedDate: lastClosedDate
       }
     }, { status: 201 });
-  } catch (e) { return NextResponse.json({ error: e.message }, { status: 500 }); }
+  } catch (e) { console.error('API error:', e); return NextResponse.json({ error: 'Internal server error' }, { status: 500 }); }
 }

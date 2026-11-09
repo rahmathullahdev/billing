@@ -1,4 +1,4 @@
-import { NextResponse } from 'next/server';
+﻿import { NextResponse } from 'next/server';
 import { sanityClient } from '@/lib/sanity';
 import { requireAuth } from '@/lib/auth';
 
@@ -113,6 +113,6 @@ export async function GET(request) {
 
     return NextResponse.json({ data: result });
   } catch (e) {
-    return NextResponse.json({ error: e.message }, { status: 500 });
+    console.error('API error:', e); return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }

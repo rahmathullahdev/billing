@@ -1,84 +1,79 @@
 import { NextResponse } from 'next/server';
 import { sanityClient } from '@/lib/sanity';
 import { signToken, setSessionCookie } from '@/lib/auth';
+import { rateLimit, getClientIp } from '@/lib/rateLimit';
 import bcrypt from 'bcryptjs';
 
+const LOGIN_WINDOW_MS = 15 * 60 * 1000;
+const LOGIN_MAX_ATTEMPTS = 10;
+
 export async function POST(request) {
+  const ip = getClientIp(request);
+  const limit = rateLimit(`login-route:${ip}`, {
+    limit: LOGIN_MAX_ATTEMPTS,
+    windowMs: LOGIN_WINDOW_MS,
+  });
+
+  if (!limit.allowed) {
+    return NextResponse.json(
+      { error: 'Too many login attempts. Please try again later.' },
+      { status: 429, headers: { 'Retry-After': String(limit.retryAfter) } }
+    );
+  }
+
   try {
-    const { email, password } = await request.json();
+    const body = await request.json().catch(() => null);
+    const email = typeof body?.email === 'string' ? body.email.trim().toLowerCase() : '';
+    const password = typeof body?.password === 'string' ? body.password : '';
 
     if (!email || !password) {
       return NextResponse.json({ error: 'Email/Username and password required' }, { status: 400 });
     }
 
-    const cleanInput = email.trim().toLowerCase();
-
-    // Fetch user from Sanity by email OR username (null-safe and active only)
-    let user = await sanityClient.fetch(
-      `*[_type == "user" && isActive == true && (lower(coalesce(email, '')) == $input || lower(coalesce(username, '')) == $input)][0]`,
-      { input: cleanInput }
-    );
-
-    // Default admin credentials fallback (admin@syndicate.com or admin / admin123 or admin)
-    const isDefaultAdmin = (cleanInput === 'admin@syndicate.com' || cleanInput === 'admin' || cleanInput === 'admin@gmail.com') && (password === 'admin123' || password === 'admin');
-
-    if (!user && isDefaultAdmin) {
-      // Auto-create default admin user in Sanity
-      const hashedPassword = await bcrypt.hash('admin123', 10);
-      user = {
-        _type: 'user',
-        _id: 'user-admin-default',
-        username: 'admin',
-        email: 'admin@syndicate.com',
-        password: hashedPassword,
-        role: 'ROLE_ADMIN',
-        isActive: true,
-        createdAt: new Date().toISOString()
-      };
-      await sanityClient.createIfNotExists(user);
-    } else if (!user) {
+    if (email.length > 254 || password.length > 256) {
       return NextResponse.json({ error: 'Invalid credentials' }, { status: 401 });
-    } else {
-      // Verify password for existing user
-      let isValid = false;
-      if (user.password) {
-        isValid = await bcrypt.compare(password, user.password);
-      }
-      // If password comparison fails, check if default admin fallback
-      if (!isValid && isDefaultAdmin) {
-        isValid = true;
-      }
-      if (!isValid) {
-        return NextResponse.json({ error: 'Invalid credentials' }, { status: 401 });
-      }
     }
 
-    // Create JWT token
+    const user = await sanityClient.fetch(
+      `*[_type == "user" && isActive == true && (lower(coalesce(email, '')) == $input || lower(coalesce(username, '')) == $input)][0]`,
+      { input: email }
+    );
+
+    if (!user || !user.password) {
+      return NextResponse.json({ error: 'Invalid credentials' }, { status: 401 });
+    }
+
+    const isValid = await bcrypt.compare(password, user.password);
+    if (!isValid) {
+      return NextResponse.json({ error: 'Invalid credentials' }, { status: 401 });
+    }
+
     const token = await signToken({
       userId: user._id,
-      email: user.email || 'admin@syndicate.com',
-      username: user.username || 'admin',
-      role: user.role || 'ROLE_ADMIN',
-      branchName: user.branchName || 'Main Branch',
+      email: user.email || '',
+      username: user.username || '',
+      role: user.role || 'ROLE_USER',
+      branchName: user.branchName || '',
       branchId: user.branchId || null,
     });
 
-    const responseData = {
-      token,
-      role: user.role || 'ROLE_ADMIN',
-      username: user.username || 'admin',
-      email: user.email || 'admin@syndicate.com',
-      user: {
-        id: user._id,
-        username: user.username || 'admin',
-        email: user.email || 'admin@syndicate.com',
-        role: user.role || 'ROLE_ADMIN',
-        branchName: user.branchName || 'Main Branch',
-        branchId: user.branchId,
+    const response = NextResponse.json(
+      {
+        role: user.role || 'ROLE_USER',
+        username: user.username || '',
+        email: user.email || '',
+        user: {
+          id: user._id,
+          username: user.username || '',
+          email: user.email || '',
+          role: user.role || 'ROLE_USER',
+          branchName: user.branchName || '',
+          branchId: user.branchId || null,
+        },
       },
-    };
+      { status: 200, headers: { 'Cache-Control': 'no-store' } }
+    );
 
-    const response = NextResponse.json(responseData, { status: 200 });
     return setSessionCookie(response, token);
   } catch (error) {
     console.error('Login error:', error);

@@ -1,52 +1,55 @@
 import { NextResponse } from 'next/server';
 import { sanityClient } from '@/lib/sanity';
-import { requireAuth } from '@/lib/auth';
+import { requireAuth, requireRole, ROLES } from '@/lib/auth';
+import { validateCustomerInput } from '@/lib/validate';
 
 // GET /api/customers/[id]
 export async function GET(request, { params }) {
   const { id } = await params;
-  const { error } = await requireAuth(request);
-  if (error) return NextResponse.json({ error }, { status: 401 });
+  const { error, status } = await requireAuth();
+  if (error) return NextResponse.json({ error }, { status });
   try {
     const customer = await sanityClient.getDocument(id);
+    if (!customer) return NextResponse.json({ error: 'Not found' }, { status: 404 });
     return NextResponse.json({ data: customer });
   } catch (e) {
-    return NextResponse.json({ error: e.message }, { status: 500 });
+    console.error('Get customer error:', e);
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }
 
 // PUT /api/customers/[id]
 export async function PUT(request, { params }) {
   const { id } = await params;
-  const { error } = await requireAuth(request);
-  if (error) return NextResponse.json({ error }, { status: 401 });
+  const { error, status } = await requireRole([ROLES.ADMIN, ROLES.MANAGER]);
+  if (error) return NextResponse.json({ error }, { status });
+
   try {
-    const body = await request.json();
-    const updated = await sanityClient.patch(id).set({
-      name: body.name,
-      email: body.email || '',
-      phoneNumber: body.phoneNumber,
-      companyName: body.companyName || '',
-      taxNumber: body.taxNumber || '',
-      address: body.address || '',
-      creditAmount: parseFloat(body.creditAmount) || 0,
-      isActive: body.isActive !== undefined ? body.isActive : true,
-    }).commit();
+    const body = await request.json().catch(() => null);
+    const { error: validationError, data } = validateCustomerInput(body);
+    if (validationError) return NextResponse.json({ error: validationError }, { status: 400 });
+
+    const updated = await sanityClient
+      .patch(id)
+      .set({ ...data, updatedAt: new Date().toISOString() })
+      .commit();
     return NextResponse.json({ data: updated });
   } catch (e) {
-    return NextResponse.json({ error: e.message }, { status: 500 });
+    console.error('Update customer error:', e);
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }
 
 // DELETE /api/customers/[id]
 export async function DELETE(request, { params }) {
   const { id } = await params;
-  const { error } = await requireAuth(request);
-  if (error) return NextResponse.json({ error }, { status: 401 });
+  const { error, status } = await requireRole([ROLES.ADMIN, ROLES.MANAGER]);
+  if (error) return NextResponse.json({ error }, { status });
   try {
     await sanityClient.delete(id);
     return NextResponse.json({ message: 'Deleted' });
   } catch (e) {
-    return NextResponse.json({ error: e.message }, { status: 500 });
+    console.error('Delete customer error:', e);
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }

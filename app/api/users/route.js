@@ -1,39 +1,58 @@
 import { NextResponse } from 'next/server';
 import { sanityClient } from '@/lib/sanity';
-import { requireAuth } from '@/lib/auth';
+import { requireRole, ROLES } from '@/lib/auth';
+import { validateUserInput } from '@/lib/validate';
 import bcrypt from 'bcryptjs';
 
-function simpleId(p = '') { return p + Date.now().toString(36) + Math.random().toString(36).substr(2, 5); }
+const BCRYPT_ROUNDS = 12;
 
-export async function GET(request) {
-  const { error, session } = await requireAuth(request);
-  if (error) return NextResponse.json({ error }, { status: 401 });
-  if (session?.role !== 'ROLE_ADMIN') return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+export async function GET() {
+  const { error, status } = await requireRole([ROLES.ADMIN]);
+  if (error) return NextResponse.json({ error }, { status });
   try {
-    const users = await sanityClient.fetch(`*[_type == "user"]{ _id, username, email, role, isActive, branchName, branchId } | order(username asc)`);
+    const users = await sanityClient.fetch(
+      `*[_type == "user"]{ _id, username, email, role, isActive, branchName, branchId } | order(username asc)`
+    );
     return NextResponse.json({ data: users });
-  } catch (e) { return NextResponse.json({ error: e.message }, { status: 500 }); }
+  } catch (e) {
+    console.error('List users error:', e);
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+  }
 }
 
 export async function POST(request) {
-  const { error, session } = await requireAuth(request);
-  if (error) return NextResponse.json({ error }, { status: 401 });
-  if (session?.role !== 'ROLE_ADMIN') return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+  const { error, status } = await requireRole([ROLES.ADMIN]);
+  if (error) return NextResponse.json({ error }, { status });
+
   try {
-    const body = await request.json();
-    const hashedPassword = await bcrypt.hash(body.password, 10);
+    const body = await request.json().catch(() => null);
+    const { error: validationError, data } = validateUserInput(body, { requirePassword: true });
+    if (validationError) return NextResponse.json({ error: validationError }, { status: 400 });
+
+    const existing = await sanityClient.fetch(
+      `*[_type == "user" && (lower(coalesce(email, '')) == $email || lower(coalesce(username, '')) == $username)][0]{ _id }`,
+      { email: data.email, username: data.username.toLowerCase() }
+    );
+    if (existing) {
+      return NextResponse.json({ error: 'A user with that email or username already exists' }, { status: 409 });
+    }
+
     const doc = {
       _type: 'user',
-      username: body.username,
-      email: body.email,
-      password: hashedPassword,
-      role: body.role || 'ROLE_USER',
-      isActive: true,
-      branchName: body.branchName || '',
-      branchId: body.branchId || '',
+      username: data.username,
+      email: data.email,
+      password: await bcrypt.hash(data.password, BCRYPT_ROUNDS),
+      role: data.role,
+      isActive: data.isActive,
+      branchName: data.branchName,
+      branchId: data.branchId,
     };
+
     const created = await sanityClient.create(doc);
     const { password: _, ...safe } = created;
     return NextResponse.json({ data: safe }, { status: 201 });
-  } catch (e) { return NextResponse.json({ error: e.message }, { status: 500 }); }
+  } catch (e) {
+    console.error('Create user error:', e);
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+  }
 }

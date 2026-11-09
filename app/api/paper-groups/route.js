@@ -1,6 +1,7 @@
-import { NextResponse } from 'next/server';
+﻿import { NextResponse } from 'next/server';
 import { sanityClient } from '@/lib/sanity';
 import { requireAuth } from '@/lib/auth';
+import { cleanString } from '@/lib/validate';
 
 function id() { return 'PG' + Date.now().toString(36) + Math.random().toString(36).substr(2, 4); }
 
@@ -13,14 +14,19 @@ export async function GET(request) {
   const page = parseInt(searchParams.get('page') || '0');
   const size = parseInt(searchParams.get('size') || '50');
   try {
+    const groqParams = {};
     let q = `*[_type == "paperGroup"`;
-    if (categoryId) q += ` && paperCategoryId == "${categoryId}"`;
+    const categoryFilter = cleanString(categoryId, { max: 120 });
+    if (categoryFilter) {
+      q += ' && paperCategoryId == $categoryId';
+      groqParams.categoryId = categoryFilter;
+    }
     q += `] | order(name asc)`;
-    const all = await sanityClient.fetch(q);
+    const all = await sanityClient.fetch(q, groqParams);
     if (listAll) return NextResponse.json({ data: all });
     const s = page * size;
     return NextResponse.json({ data: { content: all.slice(s, s + size), totalElements: all.length, totalPages: Math.ceil(all.length / size), number: page, size } });
-  } catch (e) { return NextResponse.json({ error: e.message }, { status: 500 }); }
+  } catch (e) { console.error('API error:', e); return NextResponse.json({ error: 'Internal server error' }, { status: 500 }); }
 }
 
 export async function POST(request) {
@@ -38,5 +44,5 @@ export async function POST(request) {
       updatedAt: new Date().toISOString()
     });
     return NextResponse.json({ data: created }, { status: 201 });
-  } catch (e) { return NextResponse.json({ error: e.message }, { status: 500 }); }
+  } catch (e) { console.error('API error:', e); return NextResponse.json({ error: 'Internal server error' }, { status: 500 }); }
 }

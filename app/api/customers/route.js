@@ -1,18 +1,19 @@
 import { NextResponse } from 'next/server';
 import { sanityClient } from '@/lib/sanity';
-import { requireAuth } from '@/lib/auth';
+import { requireAuth, requireRole, ROLES } from '@/lib/auth';
+import { validateCustomerInput, cleanString, toInt } from '@/lib/validate';
 
 // GET /api/customers - all customers
 // GET /api/customers?paginated=true&page=0&size=10
 export async function GET(request) {
-  const { error } = await requireAuth(request);
-  if (error) return NextResponse.json({ error }, { status: 401 });
+  const { error, status } = await requireAuth();
+  if (error) return NextResponse.json({ error }, { status });
 
   const { searchParams } = new URL(request.url);
   const paginated = searchParams.get('paginated') === 'true';
-  const page = parseInt(searchParams.get('page') || '0');
-  const size = parseInt(searchParams.get('size') || '10');
-  const search = searchParams.get('search') || '';
+  const page = toInt(searchParams.get('page'), { min: 0, max: 100000, fallback: 0 });
+  const size = toInt(searchParams.get('size'), { min: 1, max: 200, fallback: 10 });
+  const search = cleanString(searchParams.get('search') || '', { max: 100 });
 
   try {
     let query = `*[_type == "customer"`;
@@ -35,38 +36,36 @@ export async function GET(request) {
           totalPages: Math.ceil(all.length / size),
           number: page,
           size,
-        }
+        },
       });
     }
 
     return NextResponse.json({ data: all });
   } catch (e) {
-    return NextResponse.json({ error: e.message }, { status: 500 });
+    console.error('List customers error:', e);
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }
 
 // POST /api/customers
 export async function POST(request) {
-  const { error } = await requireAuth(request);
-  if (error) return NextResponse.json({ error }, { status: 401 });
+  const { error, status } = await requireRole([ROLES.ADMIN, ROLES.MANAGER]);
+  if (error) return NextResponse.json({ error }, { status });
 
   try {
-    const body = await request.json();
+    const body = await request.json().catch(() => null);
+    const { error: validationError, data } = validateCustomerInput(body);
+    if (validationError) return NextResponse.json({ error: validationError }, { status: 400 });
+
     const doc = {
       _type: 'customer',
-      name: body.name,
-      email: body.email || '',
-      phoneNumber: body.phoneNumber,
-      companyName: body.companyName || '',
-      taxNumber: body.taxNumber || '',
-      address: body.address || '',
-      creditAmount: parseFloat(body.creditAmount) || 0,
-      isActive: true,
+      ...data,
       createdAt: new Date().toISOString(),
     };
     const created = await sanityClient.create(doc);
     return NextResponse.json({ data: created }, { status: 201 });
   } catch (e) {
-    return NextResponse.json({ error: e.message }, { status: 500 });
+    console.error('Create customer error:', e);
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }

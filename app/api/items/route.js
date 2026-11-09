@@ -1,4 +1,4 @@
-import { NextResponse } from 'next/server';
+﻿import { NextResponse } from 'next/server';
 import { sanityClient } from '@/lib/sanity';
 import { requireAuth } from '@/lib/auth';
 
@@ -13,7 +13,7 @@ export async function GET(request) {
   try {
     const data = await sanityClient.fetch(`*[_type == "item"] | order(name asc)`);
     return NextResponse.json({ data });
-  } catch (e) { return NextResponse.json({ error: e.message }, { status: 500 }); }
+  } catch (e) { console.error('API error:', e); return NextResponse.json({ error: 'Internal server error' }, { status: 500 }); }
 }
 
 // POST /api/items
@@ -33,5 +33,5 @@ export async function POST(request) {
     };
     const created = await sanityClient.create(doc);
     return NextResponse.json({ data: created }, { status: 201 });
-  } catch (e) { return NextResponse.json({ error: e.message }, { status: 500 }); }
+  } catch (e) { console.error('API error:', e); return NextResponse.json({ error: 'Internal server error' }, { status: 500 }); }
 }

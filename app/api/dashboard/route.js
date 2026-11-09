@@ -1,6 +1,7 @@
-import { NextResponse } from 'next/server';
+﻿import { NextResponse } from 'next/server';
 import { sanityClient } from '@/lib/sanity';
 import { requireAuth } from '@/lib/auth';
+import { cleanString, cleanDate } from '@/lib/validate';
 
 function getDateRange(filter, startDate, endDate) {
   const today = new Date().toISOString().split('T')[0];
@@ -29,14 +30,21 @@ export async function GET(request) {
   const paymentType = searchParams.get('paymentType') || '';
 
   try {
-    const { start, end } = getDateRange(filter, startDate, endDate);
+    const range = getDateRange(filter, startDate, endDate);
+    const start = cleanDate(range.start) || new Date().toISOString().split('T')[0];
+    const end = cleanDate(range.end) || start;
+    const payment = cleanString(paymentType, { max: 40 });
 
     // Fetch bills in range
-    let query = `*[_type == "bill" && date >= "${start}" && date <= "${end}"`;
-    if (paymentType) query += ` && payment == "${paymentType}"`;
+    const groqParams = { start, end };
+    let query = `*[_type == "bill" && date >= $start && date <= $end`;
+    if (payment) {
+      query += ' && payment == $payment';
+      groqParams.payment = payment;
+    }
     query += `] | order(createdAt desc)`;
 
-    const bills = await sanityClient.fetch(query);
+    const bills = await sanityClient.fetch(query, groqParams);
 
     // Calculate stats
     const totalRevenue = bills.reduce((s, b) => s + (b.total || 0), 0);
@@ -119,6 +127,6 @@ export async function GET(request) {
       }
     });
   } catch (e) {
-    return NextResponse.json({ error: e.message }, { status: 500 });
+    console.error('API error:', e); return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }

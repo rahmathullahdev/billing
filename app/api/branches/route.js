@@ -1,79 +1,62 @@
 import { NextResponse } from 'next/server';
 import { sanityClient } from '@/lib/sanity';
-import { requireAuth } from '@/lib/auth';
+import { requireAuth, requireRole, ROLES } from '@/lib/auth';
+import { cleanString, isEmail, isPhone } from '@/lib/validate';
 import { simpleId } from '@/lib/utils';
 
-function makeGenericRoute(docType, idField, defaultOrderField = 'name') {
+function validateBranchInput(body) {
+  const name = cleanString(body?.name, { max: 160 });
+  const email = cleanString(body?.email, { max: 254 }).toLowerCase();
+  const phone = cleanString(body?.phone, { max: 20 });
+
+  if (!name) return { error: 'Branch name is required' };
+  if (email && !isEmail(email)) return { error: 'A valid email is required' };
+  if (phone && !isPhone(phone)) return { error: 'A valid phone number is required' };
+
   return {
-    GET: async (request) => {
-      const { error } = await requireAuth(request);
-      if (error) return NextResponse.json({ error }, { status: 401 });
-      const { searchParams } = new URL(request.url);
-      const page = parseInt(searchParams.get('page') || '0');
-      const size = parseInt(searchParams.get('size') || '100');
-      const listAll = searchParams.get('listAll') === 'true';
-      try {
-        const all = await sanityClient.fetch(`*[_type == "${docType}"] | order(${defaultOrderField} asc)`);
-        if (listAll) return NextResponse.json({ data: all });
-        const start = page * size;
-        return NextResponse.json({
-          data: {
-            content: all.slice(start, start + size),
-            totalElements: all.length,
-            totalPages: Math.ceil(all.length / size),
-            number: page,
-            size,
-          }
-        });
-      } catch (e) {
-        return NextResponse.json({ error: e.message }, { status: 500 });
-      }
-    },
-    POST: async (request, body) => {
-      const { error } = await requireAuth(request);
-      if (error) return NextResponse.json({ error }, { status: 401 });
-      try {
-        const data = await request.json();
-        const doc = { _type: docType, ...data, createdAt: new Date().toISOString() };
-        if (idField && !doc[idField]) doc[idField] = simpleId(docType.charAt(0).toUpperCase());
-        const created = await sanityClient.create(doc);
-        return NextResponse.json({ data: created }, { status: 201 });
-      } catch (e) {
-        return NextResponse.json({ error: e.message }, { status: 500 });
-      }
+    error: null,
+    data: {
+      branchId: cleanString(body?.branchId || body?.code, { max: 60 }),
+      name,
+      address: cleanString(body?.address, { max: 500 }),
+      phone,
+      email,
+      isActive: body?.isActive !== false,
     },
   };
 }
 
-// ─── BRANCHES ──────────────────────────────────────────────────────────────
-export async function GET(request) {
-  const { error } = await requireAuth(request);
-  if (error) return NextResponse.json({ error }, { status: 401 });
+export async function GET() {
+  const { error, status } = await requireAuth();
+  if (error) return NextResponse.json({ error }, { status });
   try {
     const all = await sanityClient.fetch(`*[_type == "branch"] | order(name asc)`);
     return NextResponse.json({ data: all });
   } catch (e) {
-    return NextResponse.json({ error: e.message }, { status: 500 });
+    console.error('List branches error:', e);
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }
 
 export async function POST(request) {
-  const { error } = await requireAuth(request);
-  if (error) return NextResponse.json({ error }, { status: 401 });
+  const { error, status } = await requireRole([ROLES.ADMIN]);
+  if (error) return NextResponse.json({ error }, { status });
+
   try {
-    const body = await request.json();
+    const body = await request.json().catch(() => null);
+    const { error: validationError, data } = validateBranchInput(body);
+    if (validationError) return NextResponse.json({ error: validationError }, { status: 400 });
+
     const doc = {
       _type: 'branch',
-      branchId: body.branchId || simpleId('BR'),
-      name: body.name,
-      address: body.address || '',
-      phone: body.phone || '',
-      email: body.email || '',
-      isActive: body.isActive !== undefined ? body.isActive : true,
+      ...data,
+      branchId: data.branchId || simpleId('BR'),
+      createdAt: new Date().toISOString(),
     };
     const created = await sanityClient.create(doc);
     return NextResponse.json({ data: created }, { status: 201 });
   } catch (e) {
-    return NextResponse.json({ error: e.message }, { status: 500 });
+    console.error('Create branch error:', e);
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }

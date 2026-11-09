@@ -1,4 +1,4 @@
-import { NextResponse } from 'next/server';
+﻿import { NextResponse } from 'next/server';
 import { sanityClient } from '@/lib/sanity';
 import { requireAuth } from '@/lib/auth';
 
@@ -9,7 +9,7 @@ export async function GET(request, ctx) {
     const { id } = await ctx.params;
     const d = await sanityClient.getDocument(id);
     return NextResponse.json({ data: d });
-  } catch (e) { return NextResponse.json({ error: e.message }, { status: 500 }); }
+  } catch (e) { console.error('API error:', e); return NextResponse.json({ error: 'Internal server error' }, { status: 500 }); }
 }
 
 export async function PUT(request, ctx) {
@@ -25,7 +25,7 @@ export async function PUT(request, ctx) {
       updatedAt: new Date().toISOString()
     }).commit();
     return NextResponse.json({ data: u });
-  } catch (e) { return NextResponse.json({ error: e.message }, { status: 500 }); }
+  } catch (e) { console.error('API error:', e); return NextResponse.json({ error: 'Internal server error' }, { status: 500 }); }
 }
 
 export async function DELETE(request, ctx) {
@@ -35,5 +35,5 @@ export async function DELETE(request, ctx) {
     const { id } = await ctx.params;
     await sanityClient.delete(id);
     return NextResponse.json({ message: 'Deleted' });
-  } catch (e) { return NextResponse.json({ error: e.message }, { status: 500 }); }
+  } catch (e) { console.error('API error:', e); return NextResponse.json({ error: 'Internal server error' }, { status: 500 }); }
 }

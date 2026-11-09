@@ -1,30 +1,33 @@
-import { NextResponse } from 'next/server';
+﻿import { NextResponse } from 'next/server';
 import { sanityClient } from '@/lib/sanity';
 import { requireAuth } from '@/lib/auth';
+import { cleanString, cleanDate } from '@/lib/validate';
 
 export async function GET(request, { params }) {
   const { error } = await requireAuth(request);
   if (error) return NextResponse.json({ error }, { status: 401 });
+  const { id } = await params;
   try {
-    const e = await sanityClient.getDocument(params.id);
+    const e = await sanityClient.getDocument(id);
     const parsed = { ...e, expensive: e.expensiveJson ? JSON.parse(e.expensiveJson) : [], otherExpensive: e.otherExpensiveJson ? JSON.parse(e.otherExpensiveJson) : [], advancePaid: e.advancePaidJson ? JSON.parse(e.advancePaidJson) : [], checkPayment: e.checkPaymentJson ? JSON.parse(e.checkPaymentJson) : [], cashDeposit: e.cashDepositJson ? JSON.parse(e.cashDepositJson) : [], otherIncomes: e.otherIncomesJson ? JSON.parse(e.otherIncomesJson) : [], machineReading: e.machineReadingJson ? JSON.parse(e.machineReadingJson) : [], credits: e.creditsJson ? JSON.parse(e.creditsJson) : [] };
     return NextResponse.json({ data: parsed });
-  } catch (ex) { return NextResponse.json({ error: ex.message }, { status: 500 }); }
+  } catch (ex) { console.error('API error:', ex); return NextResponse.json({ error: 'Internal server error' }, { status: 500 }); }
 }
 
 export async function PUT(request, { params }) {
   const { error } = await requireAuth(request);
   if (error) return NextResponse.json({ error }, { status: 401 });
+  const { id } = await params;
   try {
     const body = await request.json();
     
     // Retrieve the existing entity's date if not provided in body
-    const existing = await sanityClient.getDocument(params.id);
+    const existing = await sanityClient.getDocument(id);
     if (!existing) {
       return NextResponse.json({ error: 'Not found' }, { status: 404 });
     }
 
-    const expenseDate = body.date || existing.date || new Date().toISOString().split('T')[0];
+    const expenseDate = cleanDate(body.date) || cleanDate(existing.date) || new Date().toISOString().split('T')[0];
 
     // 1. Fetch today's bills to calculate sales
     const todayBills = await sanityClient.fetch(
@@ -83,12 +86,15 @@ export async function PUT(request, { params }) {
 
     let lastClosed = body.lastClosed !== undefined ? Number(body.lastClosed) : Number(existing.lastClosed || 0);
     if (lastClosed === 0) {
-      let q = `*[_type == "dailyExpense" && date < "${expenseDate}"`;
-      if (body.branch !== undefined ? body.branch : existing.branch) {
-        q += ` && branch == "${body.branch !== undefined ? body.branch : existing.branch}"`;
+      const branchFilter = cleanString(body.branch !== undefined ? body.branch : existing.branch, { max: 120 });
+      const lastQParams = { expenseDate };
+      let q = `*[_type == "dailyExpense" && date < $expenseDate`;
+      if (branchFilter) {
+        q += ' && branch == $branch';
+        lastQParams.branch = branchFilter;
       }
       q += `] | order(date desc)[0]`;
-      const lastDoc = await sanityClient.fetch(q);
+      const lastDoc = await sanityClient.fetch(q, lastQParams);
       if (lastDoc) {
         lastClosed = Number(lastDoc.cashInHand) || 0;
       }
@@ -99,9 +105,9 @@ export async function PUT(request, { params }) {
     const cashInHandExpected = lastClosed + paidSales + paidCredits + advancePaidTotal + otherIncomeTotal - (expensesTotal + otherExpensesTotal) - cashDepositTotal;
     const shortage = cashInHandExpected - cashInHand;
 
-    const u = await sanityClient.patch(params.id).set({
+    const u = await sanityClient.patch(id).set({
       date: expenseDate,
-      branch: body.branch !== undefined ? body.branch : existing.branch,
+      branch: cleanString(body.branch !== undefined ? body.branch : existing.branch, { max: 120 }),
       cashInHand: cashInHand,
       lastClosed: lastClosed,
       shortage: shortage,
@@ -123,5 +129,5 @@ export async function PUT(request, { params }) {
       paidCredits: paidCredits,
     }).commit();
     return NextResponse.json({ data: u });
-  } catch (e) { return NextResponse.json({ error: e.message }, { status: 500 }); }
+  } catch (e) { console.error('API error:', e); return NextResponse.json({ error: 'Internal server error' }, { status: 500 }); }
 }

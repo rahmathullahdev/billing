@@ -1,6 +1,7 @@
-import { NextResponse } from 'next/server';
+﻿import { NextResponse } from 'next/server';
 import { sanityClient } from '@/lib/sanity';
 import { requireAuth } from '@/lib/auth';
+import { cleanString, cleanDate, cleanParticulars, toNumber, toInt } from '@/lib/validate';
 
 function parseParticulars(bill) {
   if (Array.isArray(bill.particulars)) return bill.particulars;
@@ -51,7 +52,7 @@ export async function GET(request, { params }) {
     const bill = await sanityClient.getDocument(id);
     if (!bill) return NextResponse.json({ error: 'Not found' }, { status: 404 });
     return NextResponse.json({ data: toBillPayload(bill) });
-  } catch (e) { return NextResponse.json({ error: e.message }, { status: 500 }); }
+  } catch (e) { console.error('API error:', e); return NextResponse.json({ error: 'Internal server error' }, { status: 500 }); }
 }
 
 export async function PUT(request, { params }) {
@@ -59,78 +60,72 @@ export async function PUT(request, { params }) {
   if (error) return NextResponse.json({ error }, { status: 401 });
   try {
     const { id } = await params;
-    const body = await request.json();
+    const body = await request.json().catch(() => null);
+    if (!body || typeof body !== 'object' || Array.isArray(body)) {
+      return NextResponse.json({ error: 'Invalid request body' }, { status: 400 });
+    }
+
     const existing = await sanityClient.getDocument(id);
     if (!existing) return NextResponse.json({ error: 'Not found' }, { status: 404 });
 
-    let particulars = body.particulars || [];
-    if (typeof particulars === 'string') {
-      try {
-        particulars = JSON.parse(particulars);
-      } catch (e) {
-        particulars = [];
-      }
-    }
-    if (!Array.isArray(particulars)) particulars = [];
+    let particulars = cleanParticulars(body.particulars);
 
     // Enrich with the particular's name so bills render item names everywhere
     // (mirrors the old backend behavior).
     let particularsByName = {};
-    const pids = particulars.map(p => String(p.particularId || p.id || '')).filter(Boolean);
+    const pids = particulars.map(p => p.particularId).filter(Boolean);
     if (pids.length > 0) {
       try {
         const docs = await sanityClient.fetch(
           `*[_type == "particular" && particularId in $ids]{ particularId, name }`,
           { ids: pids }
         );
-        docs.forEach(d => { if (d.particularId) particularsByName[d.particularId] = d.name || ''; });
+        docs.forEach(d => { if (d.particularId) particularsByName[d.particularId] = cleanString(d.name, { max: 200 }); });
       } catch (e) { /* non-fatal */ }
     }
 
     particulars = particulars.map(p => ({
-      particularId: p.particularId || p.id || '',
-      name: p.name || p.particularName || particularsByName[p.particularId] || particularsByName[p.id] || '',
-      qty: Number(p.qty) || 1,
-      price: Number(p.price) || 0,
-      total_price: Number((Number(p.qty) || 1) * (Number(p.price) || 0)),
+      ...p,
+      name: p.name || particularsByName[p.particularId] || '',
     }));
 
-    let totalPaid = parseFloat(body.totalPaid) || 0;
-    let total = parseFloat(body.total) || 0;
-    let creditAmount = parseFloat(body.creditAmount) || 0;
+    let totalPaid = toNumber(body.totalPaid, { min: 0, max: 1e12 });
+    let total = toNumber(body.total, { min: 0, max: 1e12 });
+    let creditAmount = toNumber(body.creditAmount, { min: 0, max: 1e12 });
     const normalized = normalizeTotals(total, totalPaid, creditAmount);
     totalPaid = normalized.totalPaid;
 
-    const billStatus = body.billStatus || computeBillStatus({
-      payment: body.payment,
+    const payment = cleanString(body.payment, { max: 40 }) || existing.payment || 'Cash';
+    const billStatus = cleanString(body.billStatus, { max: 20 }) || computeBillStatus({
+      payment,
       total,
       totalPaid,
       creditAmount,
     });
 
     const updated = await sanityClient.patch(id).set({
-      billNumber: body.billNumber || existing.billNumber,
-      date: body.date || existing.date || toDateStr(new Date()),
-      employee: body.employee || existing.employee || '',
-      customerName: body.customerName || existing.customerName || '',
-      customerEmail: body.customerEmail !== undefined ? body.customerEmail : (existing.customerEmail || ''),
-      customerMobileNo: body.customerMobileNo !== undefined ? body.customerMobileNo : (existing.customerMobileNo || ''),
-      customerGstNo: body.customerGstNo !== undefined ? body.customerGstNo : (existing.customerGstNo || ''),
-      payment: body.payment || existing.payment || 'Cash',
+      billNumber: cleanString(body.billNumber, { max: 60 }) || existing.billNumber,
+      date: cleanDate(body.date) || existing.date || toDateStr(new Date()),
+      employee: cleanString(body.employee, { max: 120 }) || existing.employee || '',
+      customerName: cleanString(body.customerName, { max: 160 }) || existing.customerName || '',
+      customerEmail: body.customerEmail !== undefined ? cleanString(body.customerEmail, { max: 254 }).toLowerCase() : (existing.customerEmail || ''),
+      customerMobileNo: body.customerMobileNo !== undefined ? cleanString(body.customerMobileNo, { max: 20 }) : (existing.customerMobileNo || ''),
+      customerGstNo: body.customerGstNo !== undefined ? cleanString(body.customerGstNo, { max: 40 }) : (existing.customerGstNo || ''),
+      payment,
       totalPaid,
       total: Number(total.toFixed(2)),
       creditAmount: Number(creditAmount.toFixed(2)),
-      totalWithGst: body.totalWithGst !== undefined ? parseFloat(body.totalWithGst) : (existing.totalWithGst || total),
-      actualTotal: body.actualTotal !== undefined ? parseFloat(body.actualTotal) : (existing.actualTotal || total),
-      totalItems: parseInt(body.totalItems) || particulars.length,
+      totalWithGst: body.totalWithGst !== undefined ? toNumber(body.totalWithGst, { min: 0, max: 1e12, fallback: total }) : (existing.totalWithGst || total),
+      actualTotal: body.actualTotal !== undefined ? toNumber(body.actualTotal, { min: 0, max: 1e12, fallback: total }) : (existing.actualTotal || total),
+      totalItems: toInt(body.totalItems, { min: 0, max: 100000, fallback: particulars.length }),
       billStatus,
-      creditPaidAmount: body.creditPaidAmount !== undefined ? parseFloat(body.creditPaidAmount) || 0 : (existing.creditPaidAmount || 0),
+      creditPaidAmount: body.creditPaidAmount !== undefined ? toNumber(body.creditPaidAmount, { min: 0, max: 1e12 }) : (existing.creditPaidAmount || 0),
       particularsJson: JSON.stringify(particulars),
       updatedAt: new Date().toISOString(),
     }).commit();
 
     return NextResponse.json({ data: toBillPayload(updated) });
-  } catch (e) { return NextResponse.json({ error: e.message }, { status: 500 }); }
+  } catch (e) { console.error('API error:', e); return NextResponse.json({ error: 'Internal server error' }, { status: 500 }); }
 }
 
 export async function DELETE(request, { params }) {
@@ -140,5 +135,5 @@ export async function DELETE(request, { params }) {
     const { id } = await params;
     await sanityClient.delete(id);
     return NextResponse.json({ message: 'Deleted' });
-  } catch (e) { return NextResponse.json({ error: e.message }, { status: 500 }); }
+  } catch (e) { console.error('API error:', e); return NextResponse.json({ error: 'Internal server error' }, { status: 500 }); }
 }

@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { sanityClient } from '@/lib/sanity';
 import { requireAuth } from '@/lib/auth';
+import { cleanString, cleanDate, cleanParticulars, toNumber, toInt } from '@/lib/validate';
 
 function simpleId(p = '') { return p + Date.now().toString(36) + Math.random().toString(36).substr(2, 5); }
 
@@ -54,7 +55,7 @@ function normalizeTotals(total, totalPaid, creditAmount) {
   return { total: tot, totalPaid: paid, creditAmount: credit };
 }
 
-// ─── BILLS CRUD ──────────────────────────────────────────────────────────
+// - BILLS CRUD -
 // GET /api/bills?page=0&size=15&dateFilter=...&startDate=...&endDate=...&paymentMode=...&customerName=...
 // Legacy consumers pass `limit` and expect `data` to be a plain array.
 // Otherwise returns paginated `{ data: { content, totalElements, totalPages, number, size }, kpi }`.
@@ -179,7 +180,7 @@ export async function GET(request) {
       kpi,
     });
   } catch (e) {
-    return NextResponse.json({ error: e.message }, { status: 500 });
+    console.error('API error:', e); return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }
 
@@ -189,50 +190,43 @@ export async function POST(request) {
   if (error) return NextResponse.json({ error }, { status: 401 });
 
   try {
-    const body = await request.json();
-    const billNumber = body.billNumber || simpleId('BILL-');
-
-    // particulars may arrive as a JSON string (from the create page) or as an array
-    let particulars = body.particulars || [];
-    if (typeof particulars === 'string') {
-      try {
-        particulars = JSON.parse(particulars);
-      } catch (e) {
-        particulars = [];
-      }
+    const body = await request.json().catch(() => null);
+    if (!body || typeof body !== 'object' || Array.isArray(body)) {
+      return NextResponse.json({ error: 'Invalid request body' }, { status: 400 });
     }
-    if (!Array.isArray(particulars)) particulars = [];
+
+    const billNumber = cleanString(body.billNumber, { max: 60 }) || simpleId('BILL-');
+
+    let particulars = cleanParticulars(body.particulars);
 
     // Enrich with the particular's name so bills render item names everywhere
     // (mirrors the old backend behavior).
     let particularsByName = {};
-    const ids = particulars.map(p => String(p.particularId || p.id || '')).filter(Boolean);
+    const ids = particulars.map(p => p.particularId).filter(Boolean);
     if (ids.length > 0) {
       try {
         const docs = await sanityClient.fetch(
           `*[_type == "particular" && particularId in $ids]{ particularId, name }`,
           { ids }
         );
-        docs.forEach(d => { if (d.particularId) particularsByName[d.particularId] = d.name || ''; });
+        docs.forEach(d => { if (d.particularId) particularsByName[d.particularId] = cleanString(d.name, { max: 200 }); });
       } catch (e) { /* non-fatal */ }
     }
 
     particulars = particulars.map(p => ({
-      particularId: p.particularId || p.id || '',
-      name: p.name || p.particularName || particularsByName[p.particularId] || particularsByName[p.id] || '',
-      qty: Number(p.qty) || 1,
-      price: Number(p.price) || 0,
-      total_price: Number((Number(p.qty) || 1) * (Number(p.price) || 0)),
+      ...p,
+      name: p.name || particularsByName[p.particularId] || '',
     }));
 
-    let totalPaid = parseFloat(body.totalPaid) || 0;
-    let total = parseFloat(body.total) || 0;
-    let creditAmount = parseFloat(body.creditAmount) || 0;
+    let totalPaid = toNumber(body.totalPaid, { min: 0, max: 1e12 });
+    let total = toNumber(body.total, { min: 0, max: 1e12 });
+    let creditAmount = toNumber(body.creditAmount, { min: 0, max: 1e12 });
     const normalized = normalizeTotals(total, totalPaid, creditAmount);
     totalPaid = normalized.totalPaid;
 
-    const billStatus = body.billStatus || computeBillStatus({
-      payment: body.payment,
+    const payment = cleanString(body.payment, { max: 40 }) || 'Cash';
+    const billStatus = cleanString(body.billStatus, { max: 20 }) || computeBillStatus({
+      payment,
       total,
       totalPaid,
       creditAmount,
@@ -241,21 +235,21 @@ export async function POST(request) {
     const doc = {
       _type: 'bill',
       billNumber,
-      date: body.date || toDateStr(new Date()),
-      employee: body.employee || session?.username || '',
-      customerName: body.customerName || '',
-      customerEmail: body.customerEmail || '',
-      customerMobileNo: body.customerMobileNo || '',
-      customerGstNo: body.customerGstNo || '',
-      payment: body.payment || 'Cash',
+      date: cleanDate(body.date) || toDateStr(new Date()),
+      employee: cleanString(body.employee, { max: 120 }) || session?.username || '',
+      customerName: cleanString(body.customerName, { max: 160 }),
+      customerEmail: cleanString(body.customerEmail, { max: 254 }).toLowerCase(),
+      customerMobileNo: cleanString(body.customerMobileNo, { max: 20 }),
+      customerGstNo: cleanString(body.customerGstNo, { max: 40 }),
+      payment,
       totalPaid,
       total: Number(total.toFixed(2)),
       creditAmount: Number(creditAmount.toFixed(2)),
-      totalWithGst: parseFloat(body.totalWithGst) || total,
-      actualTotal: body.actualTotal !== undefined ? parseFloat(body.actualTotal) : Number(total.toFixed(2)),
-      totalItems: parseInt(body.totalItems) || particulars.length,
+      totalWithGst: toNumber(body.totalWithGst, { min: 0, max: 1e12, fallback: total }),
+      actualTotal: toNumber(body.actualTotal, { min: 0, max: 1e12, fallback: Number(total.toFixed(2)) }),
+      totalItems: toInt(body.totalItems, { min: 0, max: 100000, fallback: particulars.length }),
       billStatus,
-      creditPaidAmount: parseFloat(body.creditPaidAmount) || 0,
+      creditPaidAmount: toNumber(body.creditPaidAmount, { min: 0, max: 1e12 }),
       particularsJson: JSON.stringify(particulars),
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
@@ -264,6 +258,6 @@ export async function POST(request) {
     const created = await sanityClient.create(doc);
     return NextResponse.json({ data: { ...created, id: created._id, particulars } }, { status: 201 });
   } catch (e) {
-    return NextResponse.json({ error: e.message }, { status: 500 });
+    console.error('API error:', e); return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }

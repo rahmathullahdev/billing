@@ -14,11 +14,11 @@ export async function GET(request, ctx) {
     if (!rule) return NextResponse.json({ error: 'Not found' }, { status: 404 });
     return NextResponse.json(rule);
   } catch (e) {
-    return NextResponse.json({ error: e.message }, { status: 500 });
+    console.error('API error:', e); return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }
 
-// PATCH /api/page-access/[id] — admin only; toggles a role ({ role }) or status ({ isActive })
+// PATCH /api/page-access/[id] - admin only; toggles a role ({ role }) or status ({ isActive })
 export async function PATCH(request, ctx) {
   const { error, session } = await requireAuth(request);
   if (error) return NextResponse.json({ error }, { status: 401 });
@@ -40,11 +40,11 @@ export async function PATCH(request, ctx) {
     const updated = await sanityClient.patch(id).set(patch).commit();
     return NextResponse.json({ ...updated, id: updated._id });
   } catch (e) {
-    return NextResponse.json({ error: e.message }, { status: 500 });
+    console.error('API error:', e); return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }
 
-// PUT /api/page-access/[id] — admin only; full update
+// PUT /api/page-access/[id] - admin only; full update
 export async function PUT(request, ctx) {
   const { error, session } = await requireAuth(request);
   if (error) return NextResponse.json({ error }, { status: 401 });
@@ -64,11 +64,11 @@ export async function PUT(request, ctx) {
     }).commit();
     return NextResponse.json({ ...updated, id: updated._id });
   } catch (e) {
-    return NextResponse.json({ error: e.message }, { status: 500 });
+    console.error('API error:', e); return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }
 
-// DELETE /api/page-access/[id] — admin only
+// DELETE /api/page-access/[id] - admin only
 export async function DELETE(request, ctx) {
   const { error, session } = await requireAuth(request);
   if (error) return NextResponse.json({ error }, { status: 401 });
@@ -80,6 +80,6 @@ export async function DELETE(request, ctx) {
     await sanityClient.patch(id).set({ isActive: false }).commit();
     return NextResponse.json({ success: true });
   } catch (e) {
-    return NextResponse.json({ error: e.message }, { status: 500 });
+    console.error('API error:', e); return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }

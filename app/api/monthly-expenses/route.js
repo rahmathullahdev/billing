@@ -1,6 +1,7 @@
-import { NextResponse } from 'next/server';
+﻿import { NextResponse } from 'next/server';
 import { sanityClient } from '@/lib/sanity';
 import { requireAuth } from '@/lib/auth';
+import { cleanString, toInt } from '@/lib/validate';
 
 function id() { return 'ME' + Date.now().toString(36) + Math.random().toString(36).substr(2, 4); }
 
@@ -12,16 +13,18 @@ export async function GET(request) {
   const year = searchParams.get('year') || '';
   const branch = searchParams.get('branch') || '';
   try {
-    let q = `*[_type == "monthlyExpense"`;
     const conds = [];
-    if (month) conds.push(`month == ${month}`);
-    if (year) conds.push(`year == ${year}`);
-    if (branch) conds.push(`branch == "${branch}"`);
-    if (conds.length) q += ' && ' + conds.join(' && ');
-    q += `] | order(createdAt desc)`;
-    const all = await sanityClient.fetch(q);
+    const groqParams = {};
+    const monthNum = month ? toInt(month, { min: 1, max: 12, fallback: 0 }) : 0;
+    const yearNum = year ? toInt(year, { min: 1900, max: 3000, fallback: 0 }) : 0;
+    const branchFilter = cleanString(branch, { max: 120 });
+    if (monthNum) { conds.push('month == $month'); groqParams.month = monthNum; }
+    if (yearNum) { conds.push('year == $year'); groqParams.year = yearNum; }
+    if (branchFilter) { conds.push('branch == $branch'); groqParams.branch = branchFilter; }
+    const q = `*[_type == "monthlyExpense"${conds.length ? ' && ' + conds.join(' && ') : ''}] | order(createdAt desc)`;
+    const all = await sanityClient.fetch(q, groqParams);
     return NextResponse.json({ data: all });
-  } catch (e) { return NextResponse.json({ error: e.message }, { status: 500 }); }
+  } catch (e) { console.error('API error:', e); return NextResponse.json({ error: 'Internal server error' }, { status: 500 }); }
 }
 
 export async function POST(request) {
@@ -49,5 +52,5 @@ export async function POST(request) {
       createdAt: new Date().toISOString()
     })));
     return NextResponse.json({ data: created.length === 1 ? created[0] : created }, { status: 201 });
-  } catch (e) { return NextResponse.json({ error: e.message }, { status: 500 }); }
+  } catch (e) { console.error('API error:', e); return NextResponse.json({ error: 'Internal server error' }, { status: 500 }); }
 }

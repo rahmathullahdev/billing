@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { sanityClient } from '@/lib/sanity';
-import { requireAuth } from '@/lib/auth';
+import { requireAuth, requireRole, ROLES } from '@/lib/auth';
+import { cleanString } from '@/lib/validate';
 
 // Master list of every route identifier the app navigation checks.
 // Admin always has access; these defaults are the "factory" policy.
@@ -37,9 +38,11 @@ const DEFAULT_RULES = [
 ];
 
 async function upsertRule(rule) {
+  const page = cleanString(rule.page, { max: 80 });
+  if (!page) return null;
   const existing = await sanityClient.fetch(
     `*[_type == "pageAccess" && page == $page && isActive == true][0]`,
-    { page: rule.page }
+    { page }
   );
   if (existing) {
     return sanityClient.patch(existing._id).set({
@@ -51,7 +54,7 @@ async function upsertRule(rule) {
   }
   return sanityClient.create({
     _type: 'pageAccess',
-    page: rule.page,
+    page,
     admin: rule.admin !== false,
     manager: !!rule.manager,
     employee: !!rule.employee,
@@ -69,7 +72,7 @@ async function seedDefaultsIfEmpty() {
   return created;
 }
 
-// GET /api/page-access  — bare array of active rules (consumed by AppContext for nav gating)
+// GET /api/page-access  - bare array of active rules (consumed by AppContext for nav gating)
 export async function GET(request) {
   const { error } = await requireAuth(request);
   if (error) return NextResponse.json({ error }, { status: 401 });
@@ -77,38 +80,41 @@ export async function GET(request) {
     const rules = await seedDefaultsIfEmpty();
     return NextResponse.json(rules);
   } catch (e) {
-    return NextResponse.json({ error: e.message }, { status: 500 });
+    console.error('API error:', e); return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }
 
-// POST /api/page-access  — admin only; create-or-patch one rule or a bulk { rules: [...] }
+// POST /api/page-access  - admin only; create-or-patch one rule or a bulk { rules: [...] }
 export async function POST(request) {
-  const { error, session } = await requireAuth(request);
-  if (error) return NextResponse.json({ error }, { status: 401 });
-  if (session?.role !== 'ROLE_ADMIN') return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+  const { error, status } = await requireRole([ROLES.ADMIN]);
+  if (error) return NextResponse.json({ error }, { status });
   try {
     const body = await request.json();
-    const rules = Array.isArray(body.rules) ? body.rules : (Array.isArray(body) ? body : [body]);
+    const raw = Array.isArray(body?.rules) ? body.rules : (Array.isArray(body) ? body : [body]);
+    const rules = raw.slice(0, 100);
     const results = [];
     for (const rule of rules) {
       if (!rule || !rule.page) continue;
-      results.push(await upsertRule(rule));
+      const result = await upsertRule(rule);
+      if (result) results.push(result);
     }
     return NextResponse.json(results, { status: 201 });
   } catch (e) {
-    return NextResponse.json({ error: e.message }, { status: 500 });
+    console.error('API error:', e); return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }
 
-// PUT /api/page-access  — admin only; bulk update array of { id, admin, manager, employee }
+// PUT /api/page-access  - admin only; bulk update array of { id, admin, manager, employee }
 export async function PUT(request) {
-  const { error, session } = await requireAuth(request);
-  if (error) return NextResponse.json({ error }, { status: 401 });
-  if (session?.role !== 'ROLE_ADMIN') return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+  const { error, status } = await requireRole([ROLES.ADMIN]);
+  if (error) return NextResponse.json({ error }, { status });
   try {
     const body = await request.json();
+    if (!Array.isArray(body)) {
+      return NextResponse.json({ error: 'Expected an array of rules' }, { status: 400 });
+    }
     const updates = await Promise.all(
-      body.map((rule) => sanityClient.patch(rule.id).set({
+      body.slice(0, 100).filter((rule) => rule && rule.id).map((rule) => sanityClient.patch(rule.id).set({
         admin: rule.admin !== false,
         manager: !!rule.manager,
         employee: !!rule.employee,
@@ -117,6 +123,7 @@ export async function PUT(request) {
     );
     return NextResponse.json(updates);
   } catch (e) {
-    return NextResponse.json({ error: e.message }, { status: 500 });
+    console.error('Update page access error:', e);
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }

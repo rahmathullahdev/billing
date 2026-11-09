@@ -1,4 +1,4 @@
-import { NextResponse } from 'next/server';
+﻿import { NextResponse } from 'next/server';
 import { sanityClient } from '@/lib/sanity';
 import { requireAuth } from '@/lib/auth';
 
@@ -16,7 +16,7 @@ export async function GET(request) {
     if (listAll) return NextResponse.json({ data: all });
     const s = page * size;
     return NextResponse.json({ data: { content: all.slice(s, s + size), totalElements: all.length, totalPages: Math.ceil(all.length / size), number: page, size } });
-  } catch (e) { return NextResponse.json({ error: e.message }, { status: 500 }); }
+  } catch (e) { console.error('API error:', e); return NextResponse.json({ error: 'Internal server error' }, { status: 500 }); }
 }
 
 export async function POST(request) {
@@ -26,5 +26,5 @@ export async function POST(request) {
     const body = await request.json();
     const created = await sanityClient.create({ _type: 'paper', paperId: body.paperId || id(), name: body.name, paperCategory: body.paperCategory || '', paperCategoryId: body.paperCategoryId || '', paperGroup: body.paperGroup || '', paperGroupId: body.paperGroupId || '', readingCount: parseInt(body.readingCount) || 0, isActive: true });
     return NextResponse.json({ data: created }, { status: 201 });
-  } catch (e) { return NextResponse.json({ error: e.message }, { status: 500 }); }
+  } catch (e) { console.error('API error:', e); return NextResponse.json({ error: 'Internal server error' }, { status: 500 }); }
 }
