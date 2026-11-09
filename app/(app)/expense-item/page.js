@@ -250,52 +250,54 @@ export default function ExpenseItemPage() {
       </div>
 
       {/* Table */}
-      <div className="table-responsive rounded shadow-sm bg-white border" style={{ borderColor: '#e0e0e0' }}>
-        <table className="particulars-table data-table w-100">
+      <div className="table-responsive border rounded-3 shadow-sm bg-white mb-3">
+        <table className="table app-table align-middle mb-0" style={{ minWidth: '650px' }}>
           <thead>
-            <tr style={{ backgroundColor: '#002142' }}>
-              <th className="text-center text-white" style={{ width: '60px' }}>#</th>
-              <th className="text-white">NAME</th>
-              <th className="text-white">TYPE</th>
-              <th className="text-center text-white">IN ACCOUNT</th>
-              <th className="text-center text-white">ACTIONS</th>
+            <tr>
+              <th className="th-center" style={{ width: '60px' }}>#</th>
+              <th className="th-left" style={{ minWidth: '250px' }}>NAME</th>
+              <th className="th-center" style={{ width: '150px' }}>TYPE</th>
+              <th className="th-center" style={{ width: '150px' }}>IN ACCOUNT</th>
+              <th className="th-right" style={{ width: '120px' }}>ACTIONS</th>
             </tr>
           </thead>
           <tbody>
             {loading ? (
-              <tr><td colSpan="5" className="text-center py-5">Loading...</td></tr>
+              <tr><td colSpan="5" className="text-center py-5"><div className="spinner-border text-primary spinner-border-sm me-2"></div>Loading...</td></tr>
             ) : paged.length === 0 ? (
-              <tr><td colSpan="5" className="text-center py-5 text-muted">No expense items found.</td></tr>
+              <tr><td colSpan="5" className="text-center py-5 text-muted"><i className="bi bi-inbox fs-2 d-block mb-2 text-secondary"></i>No expense items found.</td></tr>
             ) : paged.map((item, i) => (
-              <tr key={itemId(item) || i} className="align-middle">
-                <td className="text-center fw-bold text-muted">{page * size + i + 1}</td>
-                <td className="fw-bold" style={{ color: '#002142' }}>{item.name}</td>
-                <td>
-                  <span className="badge rounded-pill border text-dark px-3 py-2" style={{ backgroundColor: '#f8f9fa' }}>
-                    <i className="bi bi-calendar2-event me-2 text-muted"></i>
+              <tr key={itemId(item) || i} className="table-row-hover">
+                <td className="td-center fw-bold text-muted">
+                  <span className="badge bg-light text-dark border px-2 py-1 font-monospace">{page * size + i + 1}</span>
+                </td>
+                <td className="td-left fw-bold" style={{ color: '#002142' }}>{item.name}</td>
+                <td className="td-center">
+                  <span className="badge-pill-cyan">
+                    <i className="bi bi-calendar2-event me-1"></i>
                     {item.type || 'Daily'}
                   </span>
                 </td>
-                <td className="text-center">
+                <td className="td-center">
                   {item.addInAccount === false ? (
-                    <span className="badge rounded-pill border text-dark px-3 py-2" style={{ backgroundColor: '#f8f9fa' }}>
-                      <i className="bi bi-dash-circle me-2 text-secondary"></i>
+                    <span className="badge-pill-slate">
+                      <i className="bi bi-dash-circle me-1 text-secondary"></i>
                       Excluded
                     </span>
                   ) : (
-                    <span className="badge rounded-pill border text-dark px-3 py-2" style={{ backgroundColor: '#f8f9fa' }}>
-                      <i className="bi bi-plus-circle me-2 text-success"></i>
+                    <span className="badge-pill-success">
+                      <i className="bi bi-plus-circle me-1 text-success"></i>
                       Included
                     </span>
                   )}
                 </td>
-                <td className="text-center">
-                  <div className="d-flex justify-content-center gap-2">
-                    <button className="btn btn-sm btn-outline-dark" style={{ width: 32, height: 32, padding: 0 }} onClick={() => handleEdit(item)}>
-                      <i className="bi bi-pencil-square"></i>
+                <td className="td-right">
+                  <div className="d-inline-flex align-items-center gap-1">
+                    <button className="btn btn-sm btn-outline-secondary p-1 d-inline-flex align-items-center justify-content-center shadow-none" style={{ width: '30px', height: '30px', borderRadius: '6px' }} onClick={() => handleEdit(item)} title="Edit">
+                      <i className="bi bi-pencil" style={{ fontSize: '0.8rem' }}></i>
                     </button>
-                    <button className="btn btn-sm btn-outline-danger" style={{ width: 32, height: 32, padding: 0 }} onClick={() => handleDelete(itemId(item))}>
-                      <i className="bi bi-trash"></i>
+                    <button className="btn btn-sm btn-outline-danger p-1 d-inline-flex align-items-center justify-content-center shadow-none" style={{ width: '30px', height: '30px', borderRadius: '6px' }} onClick={() => handleDelete(itemId(item))} title="Delete">
+                      <i className="bi bi-trash" style={{ fontSize: '0.8rem' }}></i>
                     </button>
                   </div>
                 </td>

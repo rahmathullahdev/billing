@@ -80,38 +80,38 @@ export default function OrderHistoryPage() {
         Order History
       </h2>
 
-      <div className="table-responsive">
-        <table className="table table-striped table-hover">
+      <div className="table-responsive border rounded-3 shadow-sm bg-white mb-3">
+        <table className="table app-table align-middle mb-0" style={{ minWidth: '850px' }}>
           <thead>
             <tr>
-              <th>Order Id</th>
-              <th>Customer</th>
-              <th>Items</th>
-              <th>Total</th>
-              <th>Payment</th>
-              <th>Status</th>
-              <th>Date</th>
+              <th className="th-left" style={{ width: '130px' }}>Order Id</th>
+              <th className="th-left" style={{ minWidth: '180px' }}>Customer</th>
+              <th className="th-left" style={{ minWidth: '200px' }}>Items</th>
+              <th className="th-right" style={{ width: '120px' }}>Total (₹)</th>
+              <th className="th-center" style={{ width: '120px' }}>Payment</th>
+              <th className="th-center" style={{ width: '110px' }}>Status</th>
+              <th className="th-left" style={{ width: '150px' }}>Date</th>
             </tr>
           </thead>
           <tbody>
             {paginatedOrders.map((order) => {
               const status = order.paymentDetails?.status || order.paymentStatus || 'PENDING';
               return (
-                <tr key={order.orderId || order._id || order.id}>
-                  <td>{order.orderId || order.billNumber || order.invoiceNumber}</td>
-                  <td>
-                    {order.customerName || '-'} <br />
+                <tr key={order.orderId || order._id || order.id} className="table-row-hover">
+                  <td className="td-left fw-bold text-primary font-monospace">{order.orderId || order.billNumber || order.invoiceNumber}</td>
+                  <td className="td-left">
+                    <div className="fw-bold" style={{ color: '#002142' }}>{order.customerName || '-'}</div>
                     <small className="text-muted">{order.phoneNumber || order.customerMobileNo || ''}</small>
                   </td>
-                  <td>{formatItems(order.items)}</td>
-                  <td>Rs. {Number(order.grandTotal || order.total || 0).toFixed(2)}</td>
-                  <td>{order.paymentMethod || order.payment || '-'}</td>
-                  <td>
-                    <span className={`badge ${status === 'COMPLETED' || status === 'PAID' ? 'bg-success' : 'bg-warning text-dark'}`}>
+                  <td className="td-left text-muted small">{formatItems(order.items)}</td>
+                  <td className="td-right fw-bold text-success">₹ {Number(order.grandTotal || order.total || 0).toFixed(2)}</td>
+                  <td className="td-center"><span className="badge-pill-slate">{order.paymentMethod || order.payment || '-'}</span></td>
+                  <td className="td-center">
+                    <span className={status === 'COMPLETED' || status === 'PAID' ? 'badge-pill-success' : 'badge-pill-cyan'}>
                       {status}
                     </span>
                   </td>
-                  <td>{formatDate(order.createdAt || order.date)}</td>
+                  <td className="td-left text-muted small">{formatDate(order.createdAt || order.date)}</td>
                 </tr>
               );
             })}

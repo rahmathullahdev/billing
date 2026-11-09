@@ -63,29 +63,33 @@ export default function ManageItemsPage() {
         <button className="btn btn-primary" onClick={() => { setEditingItem(null); setFormData({ itemId: '', name: '', category: '', basePrice: 0, description: '' }); setModalOpen(true); }}>+ Add Item</button>
       </div>
 
-      <div className="table-responsive rounded shadow-sm bg-white p-3">
-        <table className="data-table w-100">
+      <div className="table-responsive border rounded-3 shadow-sm bg-white mb-3">
+        <table className="table app-table align-middle mb-0" style={{ minWidth: '650px' }}>
           <thead>
             <tr>
-              <th>#</th>
-              <th>Item ID</th>
-              <th>Item Name</th>
-              <th>Category</th>
-              <th>Price</th>
-              <th>Actions</th>
+              <th className="th-center" style={{ width: '60px' }}>#</th>
+              <th className="th-left" style={{ width: '130px' }}>Item ID</th>
+              <th className="th-left" style={{ minWidth: '220px' }}>Item Name</th>
+              <th className="th-center" style={{ width: '150px' }}>Category</th>
+              <th className="th-right" style={{ width: '120px' }}>Price (₹)</th>
+              <th className="th-right" style={{ width: '120px' }}>Actions</th>
             </tr>
           </thead>
           <tbody>
-            {loading ? <tr><td colSpan="6" className="text-center py-4">Loading...</td></tr> : filtered.map((item, i) => (
-              <tr key={item.id}>
-                <td>{i + 1}</td>
-                <td className="fw-bold text-primary">{item.itemId}</td>
-                <td>{item.name}</td>
-                <td><span className="badge bg-light text-dark border">{item.category || 'General'}</span></td>
-                <td className="fw-semibold text-success">₹{Number(item.basePrice || item.price || 0).toFixed(2)}</td>
-                <td>
-                  <button className="btn btn-sm btn-outline-primary me-2" onClick={() => { setEditingItem(item); setFormData({ itemId: item.itemId, name: item.name, category: item.category || '', basePrice: item.basePrice || item.price || 0, description: item.description || '' }); setModalOpen(true); }}>✏️ Edit</button>
-                  <button className="btn btn-sm btn-outline-danger" onClick={() => handleDelete(item.id)}>🗑️ Delete</button>
+            {loading ? <tr><td colSpan="6" className="text-center py-4"><div className="spinner-border text-primary spinner-border-sm me-2"></div>Loading...</td></tr> : filtered.map((item, i) => (
+              <tr key={item.id} className="table-row-hover">
+                <td className="td-center fw-bold text-muted">
+                  <span className="badge bg-light text-dark border px-2 py-1 font-monospace">{i + 1}</span>
+                </td>
+                <td className="td-left fw-bold text-primary font-monospace">{item.itemId}</td>
+                <td className="td-left fw-bold" style={{ color: '#002142' }}>{item.name}</td>
+                <td className="td-center"><span className="badge-pill-cyan">{item.category || 'General'}</span></td>
+                <td className="td-right fw-bold text-success">₹ {Number(item.basePrice || item.price || 0).toFixed(2)}</td>
+                <td className="td-right">
+                  <div className="d-inline-flex align-items-center gap-1">
+                    <button className="btn btn-sm btn-outline-secondary p-1 d-inline-flex align-items-center justify-content-center shadow-none" style={{ width: '30px', height: '30px', borderRadius: '6px' }} onClick={() => { setEditingItem(item); setFormData({ itemId: item.itemId, name: item.name, category: item.category || '', basePrice: item.basePrice || item.price || 0, description: item.description || '' }); setModalOpen(true); }} title="Edit"><i className="bi bi-pencil" style={{ fontSize: '0.8rem' }}></i></button>
+                    <button className="btn btn-sm btn-outline-danger p-1 d-inline-flex align-items-center justify-content-center shadow-none" style={{ width: '30px', height: '30px', borderRadius: '6px' }} onClick={() => handleDelete(item.id)} title="Delete"><i className="bi bi-trash" style={{ fontSize: '0.8rem' }}></i></button>
+                  </div>
                 </td>
               </tr>
             ))}

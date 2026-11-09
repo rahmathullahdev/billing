@@ -104,44 +104,61 @@ export default function ManageCustomersPage() {
         </div>
       </div>
 
-      <div className="table-responsive rounded shadow-sm bg-white border-0">
-        <table className="particulars-table data-table w-100">
+      <div className="table-responsive border rounded-3 shadow-sm bg-white mb-3">
+        <table className="table app-table align-middle mb-0" style={{ minWidth: '950px' }}>
           <thead>
-            <tr style={{ backgroundColor: '#002142' }}>
-              <th className="text-center" style={{ width: '60px' }}>#</th>
-              <th>NAME</th>
-              <th>MOBILE</th>
-              <th>EMAIL</th>
-              <th>GSTIN</th>
-              <th>CREDIT</th>
-              <th className="text-center">STATUS</th>
-              <th className="text-center">ACTIONS</th>
+            <tr>
+              <th className="th-center" style={{ width: '60px' }}>#</th>
+              <th className="th-left" style={{ minWidth: '200px' }}>CUSTOMER NAME</th>
+              <th className="th-left" style={{ width: '140px' }}>MOBILE</th>
+              <th className="th-left" style={{ minWidth: '180px' }}>EMAIL</th>
+              <th className="th-center" style={{ width: '130px' }}>GSTIN</th>
+              <th className="th-right" style={{ width: '120px' }}>CREDIT (₹)</th>
+              <th className="th-center" style={{ width: '110px' }}>STATUS</th>
+              <th className="th-right" style={{ width: '120px' }}>ACTIONS</th>
             </tr>
           </thead>
           <tbody>
-            {loading ? <tr><td colSpan="8" className="text-center py-5"><div className="spinner-border text-primary me-2"></div>Loading customers...</td></tr>
-              : paged.length === 0 ? <tr><td colSpan="8" className="text-center py-5 text-muted"><i className="bi bi-person-x fs-1 d-block mb-2 text-secondary"></i>No customers found.</td></tr>
-                : paged.map((c, i) => (
-                  <tr key={itemId(c) || i}>
-                    <td className="text-center fw-bold">{page * size + i + 1}</td>
-                    <td className="fw-bold" style={{ color: '#002142' }}>{c.name}</td>
-                    <td><i className="bi bi-telephone text-primary me-1"></i>{c.phoneNumber || '-'}</td>
-                    <td>{c.email || '-'}</td>
-                    <td><span className="badge bg-light text-dark border">{c.taxNumber || '-'}</span></td>
-                    <td className="text-danger fw-bold">₹{Number(c.creditAmount || 0).toFixed(2)}</td>
-                    <td className="text-center">
-                      <button className={`btn btn-sm rounded-pill px-3 ${c.isActive === false ? 'btn-danger' : 'btn-success'}`} onClick={() => handleToggle(c)}>{c.isActive === false ? 'Inactive' : 'Active'}</button>
-                    </td>
-                    <td className="text-center">
-                      <button className="btn btn-sm btn-outline-primary me-2" onClick={() => { setEditingItem(c); setFormData({ name: c.name || '', phoneNumber: c.phoneNumber || '', email: c.email || '', taxNumber: c.taxNumber || '', companyName: c.companyName || '', address: c.address || '', creditAmount: c.creditAmount || 0 }); setModalOpen(true); }}>
-                        <i className="bi bi-pencil me-1"></i> Edit
-                      </button>
-                      <button className="btn btn-sm btn-outline-danger" onClick={() => setDeleteConfirmId(itemId(c))}>
-                        <i className="bi bi-trash me-1"></i> Delete
-                      </button>
-                    </td>
-                  </tr>
-                ))}
+            {loading ? (
+              <tr><td colSpan="8" className="text-center py-5"><div className="spinner-border text-primary spinner-border-sm me-2"></div>Loading customers...</td></tr>
+            ) : paged.length === 0 ? (
+              <tr><td colSpan="8" className="text-center py-5 text-muted"><i className="bi bi-person-x fs-2 d-block mb-2 text-secondary"></i>No customers found.</td></tr>
+            ) : paged.map((c, i) => (
+              <tr key={itemId(c) || i} className="table-row-hover">
+                <td className="td-center fw-bold text-muted">
+                  <span className="badge bg-light text-dark border px-2 py-1 font-monospace">{page * size + i + 1}</span>
+                </td>
+                <td className="td-left fw-bold" style={{ color: '#002142' }}>{c.name}</td>
+                <td className="td-left text-muted">
+                  {c.phoneNumber ? <span><i className="bi bi-telephone text-primary me-1"></i>{c.phoneNumber}</span> : '-'}
+                </td>
+                <td className="td-left text-muted">{c.email || '-'}</td>
+                <td className="td-center">
+                  {c.taxNumber ? <span className="badge bg-light text-dark border font-monospace">{c.taxNumber}</span> : <span className="text-muted">-</span>}
+                </td>
+                <td className="td-right text-danger fw-bold">
+                  ₹ {Number(c.creditAmount || 0).toFixed(2)}
+                </td>
+                <td className="td-center">
+                  <button 
+                    type="button"
+                    onClick={() => handleToggle(c)} 
+                    className={`btn btn-sm border-0 p-0 ${c.isActive !== false ? 'badge-pill-success' : 'badge-pill-danger'}`}
+                    style={{ cursor: 'pointer' }}
+                    title="Click to toggle status"
+                  >
+                    <i className={`bi bi-${c.isActive !== false ? 'check-circle-fill' : 'x-circle-fill'}`} style={{ fontSize: '0.65rem' }}></i>
+                    <span>{c.isActive !== false ? 'Active' : 'Inactive'}</span>
+                  </button>
+                </td>
+                <td className="td-right">
+                  <div className="d-inline-flex align-items-center gap-1">
+                    <button className="btn btn-sm btn-outline-secondary p-1 d-inline-flex align-items-center justify-content-center shadow-none" style={{ width: '30px', height: '30px', borderRadius: '6px' }} onClick={() => { setEditingItem(c); setFormData({ name: c.name || '', phoneNumber: c.phoneNumber || '', email: c.email || '', taxNumber: c.taxNumber || '', companyName: c.companyName || '', address: c.address || '', creditAmount: c.creditAmount || 0 }); setModalOpen(true); }} title="Edit"><i className="bi bi-pencil" style={{ fontSize: '0.8rem' }}></i></button>
+                    <button className="btn btn-sm btn-outline-danger p-1 d-inline-flex align-items-center justify-content-center shadow-none" style={{ width: '30px', height: '30px', borderRadius: '6px' }} onClick={() => setDeleteConfirmId(itemId(c))} title="Delete"><i className="bi bi-trash" style={{ fontSize: '0.8rem' }}></i></button>
+                  </div>
+                </td>
+              </tr>
+            ))}
           </tbody>
         </table>
       </div>

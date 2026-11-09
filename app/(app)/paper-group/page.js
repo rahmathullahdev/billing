@@ -170,30 +170,50 @@ export default function PaperGroupPage() {
           </div>
         </div>
 
-        <div className="table-responsive">
-          <table className="table align-middle border">
+        <div className="table-responsive border rounded-3 shadow-sm bg-white mb-3">
+          <table className="table app-table align-middle mb-0" style={{ minWidth: '600px' }}>
             <thead>
               <tr>
-                <th className="text-white fw-bold py-3 text-center border-0" style={{ backgroundColor: '#002142', fontSize: '0.75rem', width: '50px' }}>#</th>
-                <th className="text-white fw-bold py-3 text-center border-0" style={{ backgroundColor: '#002142', fontSize: '0.75rem' }}>GROUP NAME</th>
-                <th className="text-white fw-bold py-3 text-end pe-4 border-0" style={{ backgroundColor: '#002142', fontSize: '0.75rem', width: '120px' }}>ACTIONS</th>
+                <th className="th-center" style={{ width: '60px' }}>#</th>
+                <th className="th-left" style={{ minWidth: '300px' }}>GROUP NAME</th>
+                <th className="th-right" style={{ width: '120px' }}>ACTIONS</th>
               </tr>
             </thead>
             <tbody>
-              {loading ? <tr><td colSpan="3" className="text-center py-5 text-muted">Loading groups...</td></tr>
-                : paged.length === 0 ? <tr><td colSpan="3" className="text-center py-5 text-muted">No groups found.</td></tr>
-                  : paged.map((g, i) => (
-                    <tr key={itemId(g) || i} className="table-row-hover">
-                      <td className="text-center text-muted fw-semibold" style={{ fontSize: '0.85rem' }}>{page * size + i + 1}</td>
-                      <td className="text-center">
-                        <span className="fw-bold" style={{ color: '#002142', fontSize: '0.9rem' }}>{g.name}</span>
-                      </td>
-                      <td className="text-end pe-3">
-                        <button className="btn btn-sm btn-outline-secondary me-2 p-1" style={{ width: '28px', height: '28px' }} onClick={() => { setEditingItem(g); setFormData({ name: g.name, description: g.description || '' }); setShowAddForm(true); }} title="Edit"><i className="bi bi-pencil-square" style={{ fontSize: '0.8rem' }}></i></button>
-                        <button className="btn btn-sm btn-outline-danger p-1" style={{ width: '28px', height: '28px', color: '#ff6b6b', borderColor: '#ffe3e3', backgroundColor: '#fff5f5' }} onClick={() => handleDelete(itemId(g))} title="Delete"><i className="bi bi-trash" style={{ fontSize: '0.8rem' }}></i></button>
-                      </td>
-                    </tr>
-                  ))}
+              {loading ? (
+                <tr>
+                  <td colSpan="3" className="text-center py-5">
+                    <div className="spinner-border text-primary spinner-border-sm me-2" role="status"></div>
+                    <span className="text-muted fw-semibold">Loading groups...</span>
+                  </td>
+                </tr>
+              ) : paged.length === 0 ? (
+                <tr>
+                  <td colSpan="3" className="text-center py-5 text-muted">
+                    <i className="bi bi-inbox fs-2 d-block mb-2 text-secondary"></i>
+                    No groups found.
+                  </td>
+                </tr>
+              ) : (
+                paged.map((g, i) => (
+                  <tr key={itemId(g) || i} className="table-row-hover">
+                    <td className="td-center text-muted fw-semibold" style={{ fontSize: '0.85rem' }}>
+                      <span className="badge bg-light text-dark border px-2 py-1 font-monospace">
+                        {page * size + i + 1}
+                      </span>
+                    </td>
+                    <td className="td-left">
+                      <span className="fw-bold" style={{ color: '#002142', fontSize: '0.9rem' }}>{g.name}</span>
+                    </td>
+                    <td className="td-right">
+                      <div className="d-inline-flex align-items-center gap-1">
+                        <button className="btn btn-sm btn-outline-secondary p-1 d-inline-flex align-items-center justify-content-center shadow-none" style={{ width: '30px', height: '30px', borderRadius: '6px' }} onClick={() => { setEditingItem(g); setFormData({ name: g.name, description: g.description || '' }); setShowAddForm(true); }} title="Edit"><i className="bi bi-pencil" style={{ fontSize: '0.8rem' }}></i></button>
+                        <button className="btn btn-sm btn-outline-danger p-1 d-inline-flex align-items-center justify-content-center shadow-none" style={{ width: '30px', height: '30px', borderRadius: '6px' }} onClick={() => handleDelete(itemId(g))} title="Delete"><i className="bi bi-trash" style={{ fontSize: '0.8rem' }}></i></button>
+                      </div>
+                    </td>
+                  </tr>
+                ))
+              )}
             </tbody>
           </table>
         </div>

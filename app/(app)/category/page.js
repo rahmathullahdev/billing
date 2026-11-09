@@ -91,28 +91,32 @@ export default function ManageCategoryPage() {
         </button>
       </div>
 
-      <div className="table-responsive rounded shadow-sm bg-white p-3">
-        <table className="data-table w-100">
+      <div className="table-responsive border rounded-3 shadow-sm bg-white mb-3">
+        <table className="table app-table align-middle mb-0" style={{ minWidth: '550px' }}>
           <thead>
             <tr>
-              <th>#</th>
-              <th>Category Name</th>
-              <th>Actions</th>
+              <th className="th-center" style={{ width: '60px' }}>#</th>
+              <th className="th-left" style={{ minWidth: '300px' }}>Category Name</th>
+              <th className="th-right" style={{ width: '120px' }}>Actions</th>
             </tr>
           </thead>
           <tbody>
             {loading ? (
-              <tr><td colSpan="3" className="text-center py-4">Loading...</td></tr>
+              <tr><td colSpan="3" className="text-center py-4"><div className="spinner-border text-primary spinner-border-sm me-2"></div>Loading...</td></tr>
             ) : filtered.length === 0 ? (
-              <tr><td colSpan="3" className="text-center py-4 text-muted">No categories found</td></tr>
+              <tr><td colSpan="3" className="text-center py-4 text-muted"><i className="bi bi-inbox fs-2 d-block mb-2 text-secondary"></i>No categories found</td></tr>
             ) : (
               filtered.map((item, i) => (
-                <tr key={item.id}>
-                  <td>{i + 1}</td>
-                  <td className="fw-bold">{item.name}</td>
-                  <td>
-                    <button className="btn btn-sm btn-outline-primary me-2" onClick={() => { setEditingItem(item); setName(item.name); setModalOpen(true); }}>✏️ Edit</button>
-                    <button className="btn btn-sm btn-outline-danger" onClick={() => handleDelete(item.id)}>🗑️ Delete</button>
+                <tr key={item.id} className="table-row-hover">
+                  <td className="td-center fw-bold text-muted">
+                    <span className="badge bg-light text-dark border px-2 py-1 font-monospace">{i + 1}</span>
+                  </td>
+                  <td className="td-left fw-bold" style={{ color: '#002142' }}>{item.name}</td>
+                  <td className="td-right">
+                    <div className="d-inline-flex align-items-center gap-1">
+                      <button className="btn btn-sm btn-outline-secondary p-1 d-inline-flex align-items-center justify-content-center shadow-none" style={{ width: '30px', height: '30px', borderRadius: '6px' }} onClick={() => { setEditingItem(item); setName(item.name); setModalOpen(true); }} title="Edit"><i className="bi bi-pencil" style={{ fontSize: '0.8rem' }}></i></button>
+                      <button className="btn btn-sm btn-outline-danger p-1 d-inline-flex align-items-center justify-content-center shadow-none" style={{ width: '30px', height: '30px', borderRadius: '6px' }} onClick={() => handleDelete(item.id)} title="Delete"><i className="bi bi-trash" style={{ fontSize: '0.8rem' }}></i></button>
+                    </div>
                   </td>
                 </tr>
               ))

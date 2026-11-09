@@ -109,39 +109,50 @@ export default function ManageBranchesPage() {
         </div>
       </div>
 
-      <div className="table-responsive rounded shadow-sm bg-white border-0">
-        <table className="particulars-table data-table w-100">
-          <thead><tr style={{ backgroundColor: '#002142' }}>
-            <th className="text-center" style={{ width: '60px' }}>#</th>
-            <th>BRANCH CODE</th>
-            <th>BRANCH NAME</th>
-            <th>ADDRESS</th>
-            <th>PHONE</th>
-            <th>EMAIL</th>
-            <th className="text-center">STATUS</th>
-            <th className="text-center">ACTIONS</th>
-          </tr></thead>
+      <div className="table-responsive border rounded-3 shadow-sm bg-white mb-3">
+        <table className="table app-table align-middle mb-0" style={{ minWidth: '900px' }}>
+          <thead>
+            <tr>
+              <th className="th-center" style={{ width: '60px' }}>#</th>
+              <th className="th-left" style={{ width: '130px' }}>BRANCH CODE</th>
+              <th className="th-left" style={{ minWidth: '200px' }}>BRANCH NAME</th>
+              <th className="th-left" style={{ minWidth: '200px' }}>ADDRESS</th>
+              <th className="th-left" style={{ width: '130px' }}>PHONE</th>
+              <th className="th-left" style={{ minWidth: '160px' }}>EMAIL</th>
+              <th className="th-center" style={{ width: '110px' }}>STATUS</th>
+              <th className="th-right" style={{ width: '120px' }}>ACTIONS</th>
+            </tr>
+          </thead>
           <tbody>
-            {loading ? <tr><td colSpan="8" className="text-center py-5">Loading...</td></tr>
-              : paged.length === 0 ? <tr><td colSpan="8" className="text-center py-5 text-muted">No branches found.</td></tr>
+            {loading ? <tr><td colSpan="8" className="text-center py-5"><div className="spinner-border text-primary spinner-border-sm me-2"></div>Loading branches...</td></tr>
+              : paged.length === 0 ? <tr><td colSpan="8" className="text-center py-5 text-muted"><i className="bi bi-inbox fs-2 d-block mb-2 text-secondary"></i>No branches found.</td></tr>
                 : paged.map((b, i) => (
-                  <tr key={itemId(b) || i}>
-                    <td className="text-center fw-bold">{page * size + i + 1}</td>
-                    <td><span className="badge bg-light text-dark border">{b.branchId || '-'}</span></td>
-                    <td className="fw-bold" style={{ color: '#002142' }}>{b.name}</td>
-                    <td>{b.address || '-'}</td>
-                    <td>{b.phone || '-'}</td>
-                    <td>{b.email || '-'}</td>
-                    <td className="text-center">
-                      <button className={`btn btn-sm rounded-pill px-3 ${b.isActive === false ? 'btn-danger' : 'btn-success'}`} onClick={() => handleToggle(b)}>{b.isActive === false ? 'Inactive' : 'Active'}</button>
+                  <tr key={itemId(b) || i} className="table-row-hover">
+                    <td className="td-center fw-bold text-muted">
+                      <span className="badge bg-light text-dark border px-2 py-1 font-monospace">{page * size + i + 1}</span>
                     </td>
-                    <td className="text-center">
-                      <button className="btn btn-sm btn-outline-primary me-2" onClick={() => { setEditingItem(b); setFormData({ branchId: b.branchId || '', name: b.name || '', code: b.branchId || '', address: b.address || '', phone: b.phone || '', email: b.email || '' }); setModalOpen(true); }}>
-                        <i className="bi bi-pencil me-1"></i> Edit
+                    <td className="td-left"><span className="badge bg-light text-dark border font-monospace">{b.branchId || '-'}</span></td>
+                    <td className="td-left fw-bold" style={{ color: '#002142' }}>{b.name}</td>
+                    <td className="td-left text-muted">{b.address || '-'}</td>
+                    <td className="td-left text-muted">{b.phone || '-'}</td>
+                    <td className="td-left text-muted">{b.email || '-'}</td>
+                    <td className="td-center">
+                      <button 
+                        type="button"
+                        onClick={() => handleToggle(b)} 
+                        className={`btn btn-sm border-0 p-0 ${b.isActive !== false ? 'badge-pill-success' : 'badge-pill-danger'}`}
+                        style={{ cursor: 'pointer' }}
+                        title="Click to toggle status"
+                      >
+                        <i className={`bi bi-${b.isActive !== false ? 'check-circle-fill' : 'x-circle-fill'}`} style={{ fontSize: '0.65rem' }}></i>
+                        <span>{b.isActive !== false ? 'Active' : 'Inactive'}</span>
                       </button>
-                      <button className="btn btn-sm btn-outline-danger" onClick={() => handleDelete(itemId(b))}>
-                        <i className="bi bi-trash me-1"></i> Delete
-                      </button>
+                    </td>
+                    <td className="td-right">
+                      <div className="d-inline-flex align-items-center gap-1">
+                        <button className="btn btn-sm btn-outline-secondary p-1 d-inline-flex align-items-center justify-content-center shadow-none" style={{ width: '30px', height: '30px', borderRadius: '6px' }} onClick={() => { setEditingItem(b); setFormData({ branchId: b.branchId || '', name: b.name || '', code: b.branchId || '', address: b.address || '', phone: b.phone || '', email: b.email || '' }); setModalOpen(true); }} title="Edit"><i className="bi bi-pencil" style={{ fontSize: '0.8rem' }}></i></button>
+                        <button className="btn btn-sm btn-outline-danger p-1 d-inline-flex align-items-center justify-content-center shadow-none" style={{ width: '30px', height: '30px', borderRadius: '6px' }} onClick={() => handleDelete(itemId(b))} title="Delete"><i className="bi bi-trash" style={{ fontSize: '0.8rem' }}></i></button>
+                      </div>
                     </td>
                   </tr>
                 ))}

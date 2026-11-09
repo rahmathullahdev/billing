@@ -6,7 +6,8 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "seed:particulars": "node scripts/seed-particulars.js"
   },
   "dependencies": {
     "@sanity/client": "^8.5.0",

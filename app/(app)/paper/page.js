@@ -7,7 +7,7 @@ export default function ManagePaperPage() {
   const [loading, setLoading] = useState(false);
   const [search, setSearch] = useState('');
   const [page, setPage] = useState(0);
-  const size = 10;
+  const [size, setSize] = useState(15);
   const [showAddForm, setShowAddForm] = useState(false);
   const [editingItem, setEditingItem] = useState(null);
   const [categories, setCategories] = useState([]);
@@ -185,73 +185,106 @@ export default function ManagePaperPage() {
           </div>
         </div>
 
-        <div className="table-responsive">
-          <table className="table align-middle border">
+        <div className="table-responsive border rounded-3 shadow-sm bg-white mb-3">
+          <table className="table app-table align-middle mb-0" style={{ minWidth: '950px' }}>
             <thead>
               <tr>
-                <th className="text-white fw-bold py-3 text-center border-0" style={{ backgroundColor: '#002142', fontSize: '0.75rem', width: '50px' }}>#</th>
-                <th className="text-white fw-bold py-3 border-0" style={{ backgroundColor: '#002142', fontSize: '0.75rem' }}>PAPER NAME</th>
-                <th className="text-white fw-bold py-3 border-0 text-center" style={{ backgroundColor: '#002142', fontSize: '0.75rem' }}>CATEGORY</th>
-                <th className="text-white fw-bold py-3 border-0 text-center" style={{ backgroundColor: '#002142', fontSize: '0.75rem' }}>GROUP</th>
-                <th className="text-white fw-bold py-3 border-0 text-center" style={{ backgroundColor: '#002142', fontSize: '0.75rem' }}>READING COUNT</th>
-                <th className="text-white fw-bold py-3 border-0 text-center" style={{ backgroundColor: '#002142', fontSize: '0.75rem' }}>STATUS</th>
-                <th className="text-white fw-bold py-3 text-end pe-4 border-0" style={{ backgroundColor: '#002142', fontSize: '0.75rem', width: '120px' }}>ACTIONS</th>
+                <th className="th-center" style={{ width: '60px' }}>#</th>
+                <th className="th-left" style={{ minWidth: '240px' }}>PAPER NAME</th>
+                <th className="th-center" style={{ minWidth: '160px' }}>CATEGORY</th>
+                <th className="th-center" style={{ minWidth: '180px' }}>GROUP</th>
+                <th className="th-center" style={{ width: '130px' }}>READING COUNT</th>
+                <th className="th-center" style={{ width: '110px' }}>STATUS</th>
+                <th className="th-right" style={{ width: '100px' }}>ACTIONS</th>
               </tr>
             </thead>
             <tbody>
-              {loading ? <tr><td colSpan="7" className="text-center py-5 text-muted">Loading papers...</td></tr>
-                : paged.length === 0 ? <tr><td colSpan="7" className="text-center py-5 text-muted">No papers found.</td></tr>
-                  : paged.map((p, i) => (
-                    <tr key={itemId(p) || i} className="table-row-hover">
-                      <td className="text-center text-muted fw-semibold" style={{ fontSize: '0.85rem' }}>{page * size + i + 1}</td>
-                      <td>
-                        <div className="d-flex align-items-center gap-2">
-                          <div className="rounded d-flex align-items-center justify-content-center text-white shadow-sm" style={{ width: 32, height: 32, backgroundColor: '#002142' }}>
-                            <i className="bi bi-file-earmark-text-fill" style={{ fontSize: '0.8rem' }}></i>
-                          </div>
-                          <span className="fw-bold" style={{ color: '#002142', fontSize: '0.9rem' }}>{p.name}</span>
+              {loading ? (
+                <tr>
+                  <td colSpan="7" className="text-center py-5">
+                    <div className="spinner-border text-primary spinner-border-sm me-2" role="status"></div>
+                    <span className="text-muted fw-semibold">Loading papers...</span>
+                  </td>
+                </tr>
+              ) : paged.length === 0 ? (
+                <tr>
+                  <td colSpan="7" className="text-center py-5 text-muted">
+                    <i className="bi bi-inbox fs-2 d-block mb-2 text-secondary"></i>
+                    No papers found matching your search.
+                  </td>
+                </tr>
+              ) : (
+                paged.map((p, i) => (
+                  <tr key={itemId(p) || i} className="table-row-hover">
+                    <td className="td-center text-muted fw-semibold" style={{ fontSize: '0.85rem' }}>
+                      <span className="badge bg-light text-dark border px-2 py-1 font-monospace">
+                        {page * size + i + 1}
+                      </span>
+                    </td>
+                    <td className="td-left">
+                      <div className="d-flex align-items-center gap-2">
+                        <div className="rounded-2 d-flex align-items-center justify-content-center text-white shadow-sm flex-shrink-0" style={{ width: 32, height: 32, backgroundColor: '#002142' }}>
+                          <i className="bi bi-file-earmark-text" style={{ fontSize: '0.85rem' }}></i>
                         </div>
-                      </td>
-                      <td className="text-center">
-                        <span className="badge rounded-pill fw-semibold" style={{ backgroundColor: '#f0f5ff', color: '#3b82f6', border: '1px solid #bfdbfe', fontSize: '0.75rem', padding: '0.4rem 0.8rem' }}>
-                          <i className="bi bi-layers me-1"></i>{p.paperCategory || '-'}
-                        </span>
-                      </td>
-                      <td className="text-center">
-                        <span className="badge rounded-pill fw-semibold" style={{ backgroundColor: '#f0fdf4', color: '#22c55e', border: '1px solid #bbf7d0', fontSize: '0.75rem', padding: '0.4rem 0.8rem' }}>
-                          <i className="bi bi-briefcase me-1"></i>{p.paperGroup || '-'}
-                        </span>
-                      </td>
-                      <td className="text-center text-muted" style={{ fontSize: '0.85rem' }}>
+                        <span className="fw-bold" style={{ color: '#002142', fontSize: '0.9rem' }}>{p.name}</span>
+                      </div>
+                    </td>
+                    <td className="td-center">
+                      <span className="badge-pill-cyan">
+                        <i className="bi bi-layers me-1"></i>{p.paperCategory || '-'}
+                      </span>
+                    </td>
+                    <td className="td-center">
+                      <span className="badge-pill-purple">
+                        <i className="bi bi-briefcase me-1"></i>{p.paperGroup || '-'}
+                      </span>
+                    </td>
+                    <td className="td-center text-muted fw-semibold" style={{ fontSize: '0.88rem' }}>
+                      <span className="badge bg-light text-secondary border px-2 py-1">
                         <i className="bi bi-speedometer2 me-1"></i>{p.readingCount || 0}
-                      </td>
-                      <td className="text-center">
-                        <span style={{ fontSize: '0.8rem', color: p.isActive === false ? '#ef4444' : '#22c55e' }} className="fw-semibold">
-                          <i className="bi bi-circle-fill me-1" style={{ fontSize: '0.5rem' }}></i>{p.isActive === false ? 'Inactive' : 'Active'}
-                        </span>
-                      </td>
-                      <td className="text-end pe-3">
-                        <button className="btn btn-sm btn-outline-secondary me-2 p-1" style={{ width: '28px', height: '28px' }} onClick={() => { setEditingItem(p); setFormData({ ...p, name: p.name || p.paperName, isActive: p.isActive !== false }); setShowAddForm(true); }} title="Edit"><i className="bi bi-pencil-square" style={{ fontSize: '0.8rem' }}></i></button>
-                        <button className="btn btn-sm btn-outline-danger p-1" style={{ width: '28px', height: '28px', color: '#ff6b6b', borderColor: '#ffe3e3', backgroundColor: '#fff5f5' }} onClick={() => handleDelete(itemId(p))} title="Delete"><i className="bi bi-trash" style={{ fontSize: '0.8rem' }}></i></button>
-                      </td>
-                    </tr>
-                  ))}
+                      </span>
+                    </td>
+                    <td className="td-center">
+                      <span className={p.isActive !== false ? 'badge-pill-success' : 'badge-pill-danger'}>
+                        <i className={`bi bi-${p.isActive !== false ? 'check-circle-fill' : 'x-circle-fill'}`} style={{ fontSize: '0.65rem' }}></i>
+                        <span>{p.isActive !== false ? 'Active' : 'Inactive'}</span>
+                      </span>
+                    </td>
+                    <td className="td-right">
+                      <div className="d-inline-flex align-items-center gap-1">
+                        <button className="btn btn-sm btn-outline-secondary p-1 d-inline-flex align-items-center justify-content-center shadow-none" style={{ width: '30px', height: '30px', borderRadius: '6px' }} onClick={() => { setEditingItem(p); setFormData({ ...p, name: p.name || p.paperName, isActive: p.isActive !== false }); setShowAddForm(true); }} title="Edit"><i className="bi bi-pencil" style={{ fontSize: '0.8rem' }}></i></button>
+                        <button className="btn btn-sm btn-outline-danger p-1 d-inline-flex align-items-center justify-content-center shadow-none" style={{ width: '30px', height: '30px', borderRadius: '6px' }} onClick={() => handleDelete(itemId(p))} title="Delete"><i className="bi bi-trash" style={{ fontSize: '0.8rem' }}></i></button>
+                      </div>
+                    </td>
+                  </tr>
+                ))
+              )}
             </tbody>
           </table>
         </div>
 
         {/* Pagination */}
-        <div className="d-flex justify-content-between align-items-center mt-3 pt-3 border-top">
-          <div className="d-flex align-items-center gap-2 text-muted" style={{ fontSize: '0.85rem' }}>
-            <span>Rows per page:</span>
-            <select className="form-select form-select-sm shadow-none" style={{ width: '70px', fontSize: '0.85rem' }} disabled>
-              <option>10</option>
-            </select>
+        <div className="d-flex flex-wrap justify-content-between align-items-center pt-3 border-top gap-3">
+          <div className="d-flex align-items-center gap-3 text-muted small">
+            <span>
+              Showing <strong className="text-dark">{filtered.length === 0 ? 0 : page * size + 1}</strong> to <strong className="text-dark">{Math.min((page + 1) * size, filtered.length)}</strong> of <strong className="text-dark">{filtered.length}</strong> papers
+            </span>
+            <div className="d-flex align-items-center gap-1">
+              <span>Rows:</span>
+              <select className="form-select form-select-sm shadow-none py-1" style={{ width: '75px', fontSize: '0.82rem' }} value={size} onChange={e => { setSize(Number(e.target.value)); setPage(0); }}>
+                <option value={10}>10</option>
+                <option value={15}>15</option>
+                <option value={25}>25</option>
+                <option value={50}>50</option>
+                <option value={100}>100</option>
+              </select>
+            </div>
           </div>
-          <div className="d-flex gap-2 align-items-center">
-            <button className="btn btn-sm text-muted fw-semibold d-flex align-items-center gap-1 border-0" disabled={page === 0} onClick={() => setPage(page - 1)} style={{ fontSize: '0.8rem' }}><i className="bi bi-chevron-left"></i> PREVIOUS</button>
-            <span className="rounded d-flex align-items-center justify-content-center text-white fw-bold shadow-sm" style={{ width: '28px', height: '28px', backgroundColor: '#002142', fontSize: '0.85rem' }}>{page + 1}</span>
-            <button className="btn btn-sm text-muted fw-semibold d-flex align-items-center gap-1 border-0" disabled={page >= totalPages - 1} onClick={() => setPage(page + 1)} style={{ fontSize: '0.8rem' }}>NEXT <i className="bi bi-chevron-right"></i></button>
+          <div className="d-flex gap-1 align-items-center">
+            <button className="btn btn-sm btn-outline-secondary d-flex align-items-center gap-1 rounded-pill px-3" disabled={page === 0} onClick={() => setPage(page - 1)} style={{ fontSize: '0.8rem' }}><i className="bi bi-chevron-left"></i> Previous</button>
+            <span className="rounded-circle d-flex align-items-center justify-content-center text-white fw-bold shadow-sm mx-1" style={{ width: '30px', height: '30px', backgroundColor: '#002142', fontSize: '0.82rem' }}>{page + 1}</span>
+            <span className="text-muted small px-1">of {totalPages}</span>
+            <button className="btn btn-sm btn-outline-secondary d-flex align-items-center gap-1 rounded-pill px-3" disabled={page >= totalPages - 1} onClick={() => setPage(page + 1)} style={{ fontSize: '0.8rem' }}>Next <i className="bi bi-chevron-right"></i></button>
           </div>
         </div>
       </div>

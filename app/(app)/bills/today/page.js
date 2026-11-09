@@ -211,24 +211,24 @@ export default function TodayBillsPage() {
         </div>
       </div>
 
-      <div className="table-responsive rounded shadow-sm bg-white pb-2">
-        <table className="bills-table data-table w-100 mb-0">
+      <div className="table-responsive border rounded-3 shadow-sm bg-white mb-3">
+        <table className="bills-table data-table app-table align-middle mb-0" style={{ minWidth: '900px' }}>
           <thead>
             <tr>
-              <th className="text-center" style={{ width: '60px' }}>S.No</th>
-              <th>Bill Number</th>
-              <th>Customer Name</th>
-              <th>Amount (₹)</th>
-              <th>Status</th>
-              <th>Created At</th>
-              <th>Employee</th>
-              <th className="text-center" style={{ width: '120px' }}>Actions</th>
+              <th className="th-center" style={{ width: '60px' }}>S.No</th>
+              <th className="th-left" style={{ width: '150px' }}>Bill Number</th>
+              <th className="th-left" style={{ minWidth: '200px' }}>Customer Name</th>
+              <th className="th-right" style={{ width: '130px' }}>Amount (₹)</th>
+              <th className="th-center" style={{ width: '110px' }}>Status</th>
+              <th className="th-left" style={{ width: '160px' }}>Created At</th>
+              <th className="th-center" style={{ width: '140px' }}>Employee</th>
+              <th className="th-right" style={{ width: '120px' }}>Actions</th>
             </tr>
           </thead>
           <tbody>
             {loading ? (
               <tr>
-                <td colSpan="7" className="p-0">
+                <td colSpan="8" className="p-0">
                   <div className="premium-loader-container">
                     <div className="premium-loader"></div>
                     <span className="loader-text mt-3">Fetching Today's Bills...</span>
@@ -244,34 +244,34 @@ export default function TodayBillsPage() {
               </tr>
             ) : (
               filteredBills.map((bill, index) => (
-                <tr key={bill.id} className="table-row-hover border-bottom">
-                  <td className="text-center fw-semibold text-muted">
-                    {page * pageSize + index + 1}
+                <tr key={bill.id} className="table-row-hover">
+                  <td className="td-center fw-semibold text-muted">
+                    <span className="badge bg-light text-dark border px-2 py-1 font-monospace">{page * pageSize + index + 1}</span>
                   </td>
-                  <td className="fw-bold text-primary">{bill.billNumber}</td>
-                  <td>{bill.customerName || '-'}</td>
-                  <td className="fw-semibold text-success">
-                    ₹{bill.total ? bill.total.toFixed(2) : '0.00'}
+                  <td className="td-left fw-bold text-primary font-monospace">{bill.billNumber}</td>
+                  <td className="td-left fw-semibold" style={{ color: '#002142' }}>{bill.customerName || '-'}</td>
+                  <td className="td-right fw-bold text-success">
+                    ₹ {bill.total ? bill.total.toFixed(2) : '0.00'}
                   </td>
-                  <td>
-                    <span className={`badge ${bill.billStatus?.toLowerCase() === 'credit' ? 'bg-warning text-dark' : 'bg-success'}`}>
+                  <td className="td-center">
+                    <span className={bill.billStatus?.toLowerCase() === 'credit' ? 'badge-pill-cyan' : 'badge-pill-success'}>
                       {bill.billStatus || 'PAID'}
                     </span>
                   </td>
-                  <td className="text-muted small">
+                  <td className="td-left text-muted small">
                     {formatDate(bill.createdAt || bill.date)}
                   </td>
-                  <td>
+                  <td className="td-center">
                     {bill.employee ? (
-                      <span className="badge bg-light text-dark border">
+                      <span className="badge-pill-slate">
                         {bill.employee}
                       </span>
                     ) : (
                       <span className="text-muted">-</span>
                     )}
                   </td>
-                  <td>
-                    <div className="d-flex justify-content-center gap-2">
+                  <td className="td-right">
+                    <div className="d-inline-flex align-items-center gap-1">
                       <button
                         className="btn btn-sm btn-outline-secondary modern-action-btn"
                         title="Print"

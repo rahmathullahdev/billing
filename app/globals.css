@@ -56,9 +56,53 @@ html, body {
 
 .table-wrapper,
 .table-responsive,
-.customer-table-wrapper {
+.customer-table-wrapper,
+.branch-table-wrapper {
   overflow-x: auto !important;
   -webkit-overflow-scrolling: touch;
+  width: 100%;
+  position: relative;
+}
+
+/* Slim modern visible scrollbar for all table wrappers */
+.table-wrapper::-webkit-scrollbar,
+.table-responsive::-webkit-scrollbar,
+.customer-table-wrapper::-webkit-scrollbar,
+.branch-table-wrapper::-webkit-scrollbar {
+  height: 7px !important;
+  width: 7px !important;
+  display: block !important;
+}
+
+.table-wrapper::-webkit-scrollbar-track,
+.table-responsive::-webkit-scrollbar-track,
+.customer-table-wrapper::-webkit-scrollbar-track,
+.branch-table-wrapper::-webkit-scrollbar-track {
+  background: #f1f5f9 !important;
+  border-radius: 4px !important;
+}
+
+.table-wrapper::-webkit-scrollbar-thumb,
+.table-responsive::-webkit-scrollbar-thumb,
+.customer-table-wrapper::-webkit-scrollbar-thumb,
+.branch-table-wrapper::-webkit-scrollbar-thumb {
+  background: #cbd5e1 !important;
+  border-radius: 4px !important;
+}
+
+.table-wrapper::-webkit-scrollbar-thumb:hover,
+.table-responsive::-webkit-scrollbar-thumb:hover,
+.customer-table-wrapper::-webkit-scrollbar-thumb:hover,
+.branch-table-wrapper::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8 !important;
+}
+
+.table-wrapper,
+.table-responsive,
+.customer-table-wrapper,
+.branch-table-wrapper {
+  scrollbar-width: thin !important;
+  scrollbar-color: #cbd5e1 #f1f5f9 !important;
 }
 
 
@@ -143,12 +187,6 @@ html, body {
   border-radius: 12px;
   overflow-x: auto;
   border: 1px solid rgba(0,0,0,0.05);
-  scrollbar-width: none; /* Firefox */
-  -ms-overflow-style: none;  /* Internet Explorer 10+ */
-}
-
-.branch-table-wrapper::-webkit-scrollbar {
-  display: none; /* WebKit */
 }
 
 .table {
@@ -158,18 +196,149 @@ html, body {
 .table th {
   font-weight: 600;
   text-transform: uppercase;
-  font-size: 0.8rem;
+  font-size: 0.78rem;
   letter-spacing: 0.5px;
-  color: #0f172a !important; /* Fixed text color for visibility */
-  background-color: #f1f5f9 !important; /* Explicit light background */
+  color: #0f172a;
+  background-color: #f1f5f9;
   border-bottom: 2px solid #e2e8f0;
-  padding: 1rem;
+  padding: 0.75rem 0.9rem;
 }
 
 .table td {
-  padding: 1rem;
+  padding: 0.75rem 0.9rem;
   vertical-align: middle;
   border-bottom: 1px solid #f1f5f9;
+}
+
+/* ========================================================
+   UNIVERSAL MODERN RESPONSIVE TABLE SYSTEM (.app-table, .table-navy)
+   ======================================================== */
+.app-table,
+.table-navy {
+  width: 100%;
+  border-collapse: separate !important;
+  border-spacing: 0 !important;
+  margin-bottom: 0 !important;
+  background-color: #ffffff;
+}
+
+.table-navy thead,
+.table-navy thead tr,
+.table thead.table-navy,
+.table thead.table-navy tr,
+.table tr.table-navy-header,
+.table th.table-navy-th,
+.app-table thead,
+.app-table th {
+  background: #002142 !important;
+  background-color: #002142 !important;
+  color: #ffffff !important;
+  box-shadow: none !important;
+  font-weight: 700 !important;
+  text-transform: uppercase !important;
+  font-size: 0.75rem !important;
+  letter-spacing: 0.6px !important;
+  padding: 0.85rem 1rem !important;
+  border: none !important;
+  border-bottom: 2px solid #001428 !important;
+  vertical-align: middle !important;
+  white-space: nowrap !important;
+}
+
+.app-table td,
+.table-navy td {
+  padding: 0.8rem 1rem !important;
+  vertical-align: middle !important;
+  font-size: 0.86rem !important;
+  border-bottom: 1px solid #f1f5f9 !important;
+}
+
+.app-table tbody tr:hover td,
+.table-navy tbody tr:hover td,
+.table-row-hover:hover td {
+  background-color: #f8fafc !important;
+}
+
+.app-table tbody tr:last-child td,
+.table-navy tbody tr:last-child td {
+  border-bottom: none !important;
+}
+
+/* Table Alignment Classes */
+.th-center, .td-center {
+  text-align: center !important;
+}
+.th-right, .td-right {
+  text-align: right !important;
+  font-variant-numeric: tabular-nums;
+}
+.th-left, .td-left {
+  text-align: left !important;
+}
+
+/* Modern Pill Badges */
+.badge-pill-cyan {
+  background-color: #e0f2fe !important;
+  color: #0284c7 !important;
+  border: 1px solid #bae6fd !important;
+  font-weight: 600 !important;
+  font-size: 0.74rem !important;
+  padding: 0.35rem 0.75rem !important;
+  border-radius: 9999px !important;
+  display: inline-block;
+  white-space: nowrap;
+}
+
+.badge-pill-purple {
+  background-color: #f3e8ff !important;
+  color: #9333ea !important;
+  border: 1px solid #e9d5ff !important;
+  font-weight: 600 !important;
+  font-size: 0.74rem !important;
+  padding: 0.35rem 0.75rem !important;
+  border-radius: 9999px !important;
+  display: inline-block;
+  white-space: nowrap;
+}
+
+.badge-pill-slate {
+  background-color: #f1f5f9 !important;
+  color: #475569 !important;
+  border: 1px solid #e2e8f0 !important;
+  font-weight: 600 !important;
+  font-size: 0.74rem !important;
+  padding: 0.35rem 0.75rem !important;
+  border-radius: 9999px !important;
+  display: inline-block;
+  white-space: nowrap;
+}
+
+.badge-pill-success {
+  background-color: #ecfdf5 !important;
+  color: #059669 !important;
+  border: 1px solid #a7f3d0 !important;
+  font-weight: 600 !important;
+  font-size: 0.74rem !important;
+  padding: 0.35rem 0.75rem !important;
+  border-radius: 9999px !important;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  white-space: nowrap;
+}
+
+.badge-pill-danger {
+  background-color: #fef2f2 !important;
+  color: #dc2626 !important;
+  border: 1px solid #fecaca !important;
+  font-weight: 600 !important;
+  font-size: 0.74rem !important;
+  padding: 0.35rem 0.75rem !important;
+  border-radius: 9999px !important;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  white-space: nowrap;
 }
 
 .action-btn-group {
@@ -9927,10 +10096,12 @@ html, body, #root {
 input[type="number"]::-webkit-inner-spin-button,
 input[type="number"]::-webkit-outer-spin-button {
     -webkit-appearance: none !important;
+    appearance: none !important;
     margin: 0 !important;
 }
 input[type="number"] {
     -moz-appearance: textfield !important;
+    appearance: textfield !important;
 }
 
 /* Universal Form Input Icon Layout Fix (Prevents icons from overlapping text) */

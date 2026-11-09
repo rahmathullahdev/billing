@@ -1,0 +1,1526 @@
+{
+  "total": 169,
+  "particulars": [
+    {
+      "id": 301,
+      "name": "First ten Copies",
+      "price": 2,
+      "price_back": 2,
+      "paperName": "A4 70gsm copier",
+      "paperGroup": null,
+      "category": "B/W Xerox & Print"
+    },
+    {
+      "id": 302,
+      "name": "A4 B/W xerox",
+      "price": 1.5,
+      "price_back": 1,
+      "paperName": "A4 70gsm copier",
+      "paperGroup": null,
+      "category": "B/W Xerox & Print"
+    },
+    {
+      "id": 303,
+      "name": "A4 B/W bond Xerox 1st",
+      "price": 3,
+      "price_back": 3,
+      "paperName": "A4 85gsm Bond",
+      "paperGroup": null,
+      "category": "B/W Xerox & Print"
+    },
+    {
+      "id": 304,
+      "name": "A4 B/W bond Xerox Add",
+      "price": 2,
+      "price_back": 2,
+      "paperName": "A4 85gsm Bond",
+      "paperGroup": null,
+      "category": "B/W Xerox & Print"
+    },
+    {
+      "id": 305,
+      "name": "FS B/W Xerox",
+      "price": 1.5,
+      "price_back": 1.5,
+      "paperName": "F/S 75gsm copier",
+      "paperGroup": null,
+      "category": "B/W Xerox & Print"
+    },
+    {
+      "id": 306,
+      "name": "F/S B/W Printout",
+      "price": 3,
+      "price_back": 3,
+      "paperName": "F/S 75gsm copier",
+      "paperGroup": null,
+      "category": "B/W Xerox & Print"
+    },
+    {
+      "id": 307,
+      "name": "Fs Green Xerox",
+      "price": 2,
+      "price_back": 2,
+      "paperName": "F/S 80gsm Ledger",
+      "paperGroup": null,
+      "category": "B/W Xerox & Print"
+    },
+    {
+      "id": 308,
+      "name": "FS Green Printout",
+      "price": 4,
+      "price_back": 4,
+      "paperName": "F/S 80gsm Ledger",
+      "paperGroup": null,
+      "category": "B/W Xerox & Print"
+    },
+    {
+      "id": 309,
+      "name": "A3 B/W Xerox",
+      "price": 5,
+      "price_back": 3,
+      "paperName": "A3 75gsm copier",
+      "paperGroup": null,
+      "category": "B/W Xerox & Print"
+    },
+    {
+      "id": 310,
+      "name": "A4 C/R paper (B/W)",
+      "price": 2,
+      "price_back": 2,
+      "paperName": null,
+      "paperGroup": "A4 colour paper(4 colous)",
+      "category": "B/W Xerox & Print"
+    },
+    {
+      "id": 311,
+      "name": "A4 Chart Xerox (B/W)",
+      "price": 5,
+      "price_back": 0,
+      "paperName": null,
+      "paperGroup": null,
+      "category": null
+    },
+    {
+      "id": 312,
+      "name": "A4 Chart Print (B/W)",
+      "price": 6,
+      "price_back": 0,
+      "paperName": null,
+      "paperGroup": null,
+      "category": null
+    },
+    {
+      "id": 313,
+      "name": "OHP plain Sheet",
+      "price": 4,
+      "price_back": 0,
+      "paperName": null,
+      "paperGroup": null,
+      "category": "Others"
+    },
+    {
+      "id": 314,
+      "name": "OHP B/W Xerox",
+      "price": 5,
+      "price_back": 0,
+      "paperName": null,
+      "paperGroup": null,
+      "category": "B/W Xerox & Print"
+    },
+    {
+      "id": 315,
+      "name": "OHP B/W Print",
+      "price": 6,
+      "price_back": 0,
+      "paperName": null,
+      "paperGroup": null,
+      "category": null
+    },
+    {
+      "id": 316,
+      "name": "b/w enlarge",
+      "price": 0,
+      "price_back": 0,
+      "paperName": null,
+      "paperGroup": null,
+      "category": "B/W Xerox & Print"
+    },
+    {
+      "id": 317,
+      "name": "b/w reduce",
+      "price": 0,
+      "price_back": 0,
+      "paperName": null,
+      "paperGroup": null,
+      "category": "B/W Xerox & Print"
+    },
+    {
+      "id": 318,
+      "name": "A4 tracing print",
+      "price": 0,
+      "price_back": 0,
+      "paperName": null,
+      "paperGroup": null,
+      "category": "Colour Xerox and printouts"
+    },
+    {
+      "id": 319,
+      "name": "A3 tracing print",
+      "price": 0,
+      "price_back": 0,
+      "paperName": null,
+      "paperGroup": null,
+      "category": "Colour Xerox and printouts"
+    },
+    {
+      "id": 320,
+      "name": "A4 B/W Ist Print",
+      "price": 2,
+      "price_back": 2,
+      "paperName": "A4 70gsm copier",
+      "paperGroup": null,
+      "category": "B/W Xerox & Print"
+    },
+    {
+      "id": 321,
+      "name": "A4 B/W add Print",
+      "price": 1.5,
+      "price_back": 1.25,
+      "paperName": "A4 70gsm copier",
+      "paperGroup": null,
+      "category": "B/W Xerox & Print"
+    },
+    {
+      "id": 322,
+      "name": "A3 B/W Printout",
+      "price": 7,
+      "price_back": 7,
+      "paperName": "A3 75gsm copier",
+      "paperGroup": null,
+      "category": "B/W Xerox & Print"
+    },
+    {
+      "id": 323,
+      "name": "A4 bond 1st print",
+      "price": 3,
+      "price_back": 3,
+      "paperName": "A4 85gsm Bond",
+      "paperGroup": null,
+      "category": "B/W Xerox & Print"
+    },
+    {
+      "id": 324,
+      "name": "A4 bond Add print",
+      "price": 2,
+      "price_back": 2,
+      "paperName": "A4 85gsm Bond",
+      "paperGroup": null,
+      "category": "B/W Xerox & Print"
+    },
+    {
+      "id": 325,
+      "name": "A4 B/W ( without paper)",
+      "price": 1,
+      "price_back": 0,
+      "paperName": null,
+      "paperGroup": "others",
+      "category": "B/W Xerox & Print"
+    },
+    {
+      "id": 326,
+      "name": "A4 C/R Xerox",
+      "price": 8,
+      "price_back": 8,
+      "paperName": "A4 100 gsm CLC Paper",
+      "paperGroup": null,
+      "category": "Colour Xerox and printouts"
+    },
+    {
+      "id": 327,
+      "name": "F/S C/R Xerox",
+      "price": 13,
+      "price_back": 13,
+      "paperName": null,
+      "paperGroup": null,
+      "category": "Colour Xerox and printouts"
+    },
+    {
+      "id": 328,
+      "name": "A3 C/R Xerox",
+      "price": 15,
+      "price_back": 15,
+      "paperName": "A3 100 gsm colotech",
+      "paperGroup": null,
+      "category": "Colour Xerox and printouts"
+    },
+    {
+      "id": 329,
+      "name": "A4 board xerox (clr)",
+      "price": 20,
+      "price_back": 0,
+      "paperName": null,
+      "paperGroup": "A4 All Gsm Boards (130,170,225,250,280,300)",
+      "category": "Colour Xerox and printouts"
+    },
+    {
+      "id": 330,
+      "name": "A3 board Xerox ( CLR)",
+      "price": 30,
+      "price_back": 30,
+      "paperName": null,
+      "paperGroup": "A3 All gsm (130,170,225,250,280,300)",
+      "category": "Colour Xerox and printouts"
+    },
+    {
+      "id": 331,
+      "name": "A4 ID Synthetic",
+      "price": 90,
+      "price_back": 45,
+      "paperName": "Rubber Sheet ID Card 250 gsm",
+      "paperGroup": null,
+      "category": "Colour Xerox and printouts"
+    },
+    {
+      "id": 332,
+      "name": "12*18 ID synthetic",
+      "price": 90,
+      "price_back": 70,
+      "paperName": "Rubber Sheet ID Card 250 gsm",
+      "paperGroup": null,
+      "category": "Colour Xerox and printouts"
+    },
+    {
+      "id": 333,
+      "name": "OHP COLOUR XEROX",
+      "price": 50,
+      "price_back": 0,
+      "paperName": null,
+      "paperGroup": "OHP Film",
+      "category": "Colour Xerox and printouts"
+    },
+    {
+      "id": 334,
+      "name": "passport photo ( 30 Nos)",
+      "price": 35,
+      "price_back": 0,
+      "paperName": "300 gsm Mirror Coated",
+      "paperGroup": null,
+      "category": "Colour Xerox and printouts"
+    },
+    {
+      "id": 335,
+      "name": "passport photo ( 60 Nos)",
+      "price": 60,
+      "price_back": 0,
+      "paperName": null,
+      "paperGroup": "Mirror Boards",
+      "category": "Colour Xerox and printouts"
+    },
+    {
+      "id": 336,
+      "name": "A4 Synthetic (Xerox)",
+      "price": 0,
+      "price_back": 0,
+      "paperName": "Rubber Sheet ID Card 250 gsm",
+      "paperGroup": null,
+      "category": "Colour Xerox and printouts"
+    },
+    {
+      "id": 337,
+      "name": "A4 C/R first Print",
+      "price": 12,
+      "price_back": 12,
+      "paperName": "A4 100 gsm CLC Paper",
+      "paperGroup": null,
+      "category": "Colour Xerox and printouts"
+    },
+    {
+      "id": 338,
+      "name": "A4 C/R Add Print",
+      "price": 8,
+      "price_back": 8,
+      "paperName": "A4 100 gsm CLC Paper",
+      "paperGroup": null,
+      "category": "Colour Xerox and printouts"
+    },
+    {
+      "id": 339,
+      "name": "Envelope printing ( A5,A6,Office)",
+      "price": 12,
+      "price_back": 0,
+      "paperName": null,
+      "paperGroup": "Envelope Covers",
+      "category": "Colour Xerox and printouts"
+    },
+    {
+      "id": 340,
+      "name": "Envelope printing A4",
+      "price": 18,
+      "price_back": 0,
+      "paperName": null,
+      "paperGroup": "Envelope Covers",
+      "category": "Colour Xerox and printouts"
+    },
+    {
+      "id": 341,
+      "name": "Envelope Metalic",
+      "price": 18,
+      "price_back": 0,
+      "paperName": null,
+      "paperGroup": "Envelope Covers",
+      "category": "Colour Xerox and printouts"
+    },
+    {
+      "id": 342,
+      "name": "A3 C/R Print Paper",
+      "price": 25,
+      "price_back": 25,
+      "paperName": "A3 100 gsm colotech",
+      "paperGroup": null,
+      "category": "Colour Xerox and printouts"
+    },
+    {
+      "id": 343,
+      "name": "A3 C/R Add Print",
+      "price": 15,
+      "price_back": 15,
+      "paperName": "A3 100 gsm colotech",
+      "paperGroup": null,
+      "category": "Colour Xerox and printouts"
+    },
+    {
+      "id": 344,
+      "name": "FS C/R Printout",
+      "price": 15,
+      "price_back": 15,
+      "paperName": null,
+      "paperGroup": null,
+      "category": "Colour Xerox and printouts"
+    },
+    {
+      "id": 345,
+      "name": "Color Print (W/O Paper)",
+      "price": 0,
+      "price_back": 0,
+      "paperName": null,
+      "paperGroup": "others",
+      "category": "Colour Xerox and printouts"
+    },
+    {
+      "id": 346,
+      "name": "A4 C/R ( Ups) Ist",
+      "price": 15,
+      "price_back": 15,
+      "paperName": "A4 100 gsm CLC Paper",
+      "paperGroup": null,
+      "category": "Colour Xerox and printouts"
+    },
+    {
+      "id": 347,
+      "name": "A4 C/R (UPS) Add",
+      "price": 12,
+      "price_back": 12,
+      "paperName": "A4 100 gsm CLC Paper",
+      "paperGroup": null,
+      "category": "Colour Xerox and printouts"
+    },
+    {
+      "id": 348,
+      "name": "A4 Board C/R 1st",
+      "price": 0,
+      "price_back": 0,
+      "paperName": null,
+      "paperGroup": "A4 All Gsm Boards (130,170,225,250,280,300)",
+      "category": "Colour Xerox and printouts"
+    },
+    {
+      "id": 349,
+      "name": "A4 C/R Board Add",
+      "price": 0,
+      "price_back": 0,
+      "paperName": null,
+      "paperGroup": "A4 All Gsm Boards (130,170,225,250,280,300)",
+      "category": "Colour Xerox and printouts"
+    },
+    {
+      "id": 376,
+      "name": "Sticker Ist Print",
+      "price": 35,
+      "price_back": 0,
+      "paperName": null,
+      "paperGroup": "A3+ Sticker Sheet",
+      "category": "Colour Xerox and printouts"
+    },
+    {
+      "id": 377,
+      "name": "Sticker Add Print",
+      "price": 22,
+      "price_back": 0,
+      "paperName": null,
+      "paperGroup": "A3+ Sticker Sheet",
+      "category": "Colour Xerox and printouts"
+    },
+    {
+      "id": 378,
+      "name": "cd sticker Ist print",
+      "price": 40,
+      "price_back": 0,
+      "paperName": "Sticker 8 Ups CD Cut",
+      "paperGroup": null,
+      "category": "Colour Xerox and printouts"
+    },
+    {
+      "id": 379,
+      "name": "cd sticker add print",
+      "price": 30,
+      "price_back": 0,
+      "paperName": "Sticker 8 Ups CD Cut",
+      "paperGroup": null,
+      "category": "Colour Xerox and printouts"
+    },
+    {
+      "id": 380,
+      "name": "24 ups sticker Ist print",
+      "price": 40,
+      "price_back": 0,
+      "paperName": "Sticker 24 Ups Badge",
+      "paperGroup": null,
+      "category": "Colour Xerox and printouts"
+    },
+    {
+      "id": 381,
+      "name": "24 ups add print",
+      "price": 30,
+      "price_back": 0,
+      "paperName": "Sticker 24 Ups Badge",
+      "paperGroup": null,
+      "category": "Colour Xerox and printouts"
+    },
+    {
+      "id": 382,
+      "name": "+3 350 gsm Ist print",
+      "price": 35,
+      "price_back": 35,
+      "paperName": null,
+      "paperGroup": "350 gsm all boards (a3,+1,+3,13*19)",
+      "category": "Colour Xerox and printouts"
+    },
+    {
+      "id": 383,
+      "name": "+3 350 gsm add print",
+      "price": 25,
+      "price_back": 25,
+      "paperName": null,
+      "paperGroup": "350 gsm all boards (a3,+1,+3,13*19)",
+      "category": "Colour Xerox and printouts"
+    },
+    {
+      "id": 384,
+      "name": "synthetic sticker (Ist)",
+      "price": 60,
+      "price_back": 0,
+      "paperName": null,
+      "paperGroup": "PVC STICKER ( ONLY WHITE MATT & GLOSSY)",
+      "category": "Colour Xerox and printouts"
+    },
+    {
+      "id": 385,
+      "name": "synthetic sticker (add)",
+      "price": 60,
+      "price_back": 0,
+      "paperName": null,
+      "paperGroup": "SYNTHETIC (WHITE 125,200 MICRON ONLY)",
+      "category": "Colour Xerox and printouts"
+    },
+    {
+      "id": 386,
+      "name": "texture first print",
+      "price": 40,
+      "price_back": 40,
+      "paperName": null,
+      "paperGroup": "Texture Boards",
+      "category": "Colour Xerox and printouts"
+    },
+    {
+      "id": 387,
+      "name": "texture add print",
+      "price": 25,
+      "price_back": 25,
+      "paperName": null,
+      "paperGroup": "Texture Boards",
+      "category": "Colour Xerox and printouts"
+    },
+    {
+      "id": 388,
+      "name": "metallic first print",
+      "price": 50,
+      "price_back": 50,
+      "paperName": null,
+      "paperGroup": "METALLIC ALL BOARDS",
+      "category": "Colour Xerox and printouts"
+    },
+    {
+      "id": 389,
+      "name": "metallic add print",
+      "price": 35,
+      "price_back": 35,
+      "paperName": null,
+      "paperGroup": "METALLIC ALL BOARDS",
+      "category": "Colour Xerox and printouts"
+    },
+    {
+      "id": 390,
+      "name": "ivory first print",
+      "price": 35,
+      "price_back": 35,
+      "paperName": null,
+      "paperGroup": "Ivory Board",
+      "category": "Colour Xerox and printouts"
+    },
+    {
+      "id": 391,
+      "name": "ivory add print",
+      "price": 25,
+      "price_back": 25,
+      "paperName": null,
+      "paperGroup": "Ivory Board",
+      "category": "Colour Xerox and printouts"
+    },
+    {
+      "id": 392,
+      "name": "gkent first print",
+      "price": 40,
+      "price_back": 40,
+      "paperName": "Kent 300 gsm",
+      "paperGroup": null,
+      "category": "Colour Xerox and printouts"
+    },
+    {
+      "id": 393,
+      "name": "gkent add print",
+      "price": 30,
+      "price_back": 30,
+      "paperName": "Kent 300 gsm",
+      "paperGroup": null,
+      "category": "Colour Xerox and printouts"
+    },
+    {
+      "id": 394,
+      "name": "Thin Synthetic (1st)",
+      "price": 50,
+      "price_back": 50,
+      "paperName": "Synthetic 125 Micron",
+      "paperGroup": null,
+      "category": "Colour Xerox and printouts"
+    },
+    {
+      "id": 395,
+      "name": "Thin synthetic (Add)",
+      "price": 50,
+      "price_back": 50,
+      "paperName": "Synthetic 125 Micron",
+      "paperGroup": null,
+      "category": "Colour Xerox and printouts"
+    },
+    {
+      "id": 396,
+      "name": "Thick Syn (1st)",
+      "price": 60,
+      "price_back": 60,
+      "paperName": "Synthetic 200 Micron",
+      "paperGroup": null,
+      "category": "Colour Xerox and printouts"
+    },
+    {
+      "id": 397,
+      "name": "Thick Syn (add)",
+      "price": 60,
+      "price_back": 60,
+      "paperName": "Synthetic 200 Micron",
+      "paperGroup": null,
+      "category": "Colour Xerox and printouts"
+    },
+    {
+      "id": 398,
+      "name": "transparent Sticker (1st)",
+      "price": 75,
+      "price_back": 0,
+      "paperName": "Sticker PVC Clear Transparancy",
+      "paperGroup": null,
+      "category": "Colour Xerox and printouts"
+    },
+    {
+      "id": 399,
+      "name": "transparent Sticker ( Add)",
+      "price": 60,
+      "price_back": 0,
+      "paperName": "Sticker PVC Clear Transparancy",
+      "paperGroup": null,
+      "category": "Colour Xerox and printouts"
+    },
+    {
+      "id": 400,
+      "name": "Gold/Silver Syn ( 1st)",
+      "price": 75,
+      "price_back": 75,
+      "paperName": null,
+      "paperGroup": "PVC ( Gold, Silver ,Dual,Pearl)",
+      "category": "Colour Xerox and printouts"
+    },
+    {
+      "id": 401,
+      "name": "Gold/silver Syn (add)",
+      "price": 60,
+      "price_back": 60,
+      "paperName": null,
+      "paperGroup": "PVC ( Gold, Silver ,Dual,Pearl)",
+      "category": "Colour Xerox and printouts"
+    },
+    {
+      "id": 402,
+      "name": "Metallic Sticker 1st",
+      "price": 75,
+      "price_back": 0,
+      "paperName": null,
+      "paperGroup": "Metallic Syn. Sticker",
+      "category": "Colour Xerox and printouts"
+    },
+    {
+      "id": 403,
+      "name": "Metallic Sticker Add",
+      "price": 75,
+      "price_back": 0,
+      "paperName": null,
+      "paperGroup": "Metallic Syn. Sticker",
+      "category": "Colour Xerox and printouts"
+    },
+    {
+      "id": 404,
+      "name": "13x40 Paper Ist Print",
+      "price": 90,
+      "price_back": 90,
+      "paperName": null,
+      "paperGroup": null,
+      "category": null
+    },
+    {
+      "id": 405,
+      "name": "13x40 Paper Add Print",
+      "price": 60,
+      "price_back": 60,
+      "paperName": null,
+      "paperGroup": null,
+      "category": null
+    },
+    {
+      "id": 406,
+      "name": "13x40 BOARD Ist Print",
+      "price": 90,
+      "price_back": 90,
+      "paperName": null,
+      "paperGroup": null,
+      "category": null
+    },
+    {
+      "id": 407,
+      "name": "13x30 BOARD Add Print",
+      "price": 60,
+      "price_back": 60,
+      "paperName": null,
+      "paperGroup": "13x30 board",
+      "category": "Colour Xerox and printouts"
+    },
+    {
+      "id": 408,
+      "name": "13x40 Sticker Ist Print",
+      "price": 120,
+      "price_back": 0,
+      "paperName": null,
+      "paperGroup": null,
+      "category": null
+    },
+    {
+      "id": 409,
+      "name": "13x40 Sticker Add Print",
+      "price": 100,
+      "price_back": 0,
+      "paperName": null,
+      "paperGroup": null,
+      "category": null
+    },
+    {
+      "id": 410,
+      "name": "400 Gsm 1st Print",
+      "price": 40,
+      "price_back": 40,
+      "paperName": null,
+      "paperGroup": null,
+      "category": null
+    },
+    {
+      "id": 411,
+      "name": "400 Gsm Add Print",
+      "price": 30,
+      "price_back": 30,
+      "paperName": null,
+      "paperGroup": null,
+      "category": null
+    },
+    {
+      "id": 412,
+      "name": "mirror 280 gsm I print",
+      "price": 30,
+      "price_back": 0,
+      "paperName": null,
+      "paperGroup": "Mirror Boards",
+      "category": "Colour Xerox and printouts"
+    },
+    {
+      "id": 413,
+      "name": "mirror 280 gsm add print",
+      "price": 20,
+      "price_back": 0,
+      "paperName": null,
+      "paperGroup": "Mirror Boards",
+      "category": "Colour Xerox and printouts"
+    },
+    {
+      "id": 414,
+      "name": "mirror 300 gsm (Ist)",
+      "price": 35,
+      "price_back": 0,
+      "paperName": null,
+      "paperGroup": "Mirror Boards",
+      "category": "Colour Xerox and printouts"
+    },
+    {
+      "id": 415,
+      "name": "mirror 300 gsm (add)",
+      "price": 25,
+      "price_back": 0,
+      "paperName": null,
+      "paperGroup": "Mirror Boards",
+      "category": "Colour Xerox and printouts"
+    },
+    {
+      "id": 416,
+      "name": "A2 plan xerox",
+      "price": 30,
+      "price_back": 30,
+      "paperName": "A2/18'' 90 gsm 150 meters 3'' Core",
+      "paperGroup": null,
+      "category": "Plan Xerox/Printouts"
+    },
+    {
+      "id": 417,
+      "name": "A1 plan xerx",
+      "price": 50,
+      "price_back": 50,
+      "paperName": "A1/24\" 90 gsm 150 meters 3'' Core",
+      "paperGroup": null,
+      "category": "Plan Xerox/Printouts"
+    },
+    {
+      "id": 418,
+      "name": "A0 plan xerox",
+      "price": 80,
+      "price_back": 80,
+      "paperName": "A0/36\" 90 gsm 150 meters 3'' Core",
+      "paperGroup": null,
+      "category": "Plan Xerox/Printouts"
+    },
+    {
+      "id": 419,
+      "name": "A0+ Plan Xerox",
+      "price": 100,
+      "price_back": 0,
+      "paperName": "A0/36\" 90 gsm 150 meters 3'' Core",
+      "paperGroup": null,
+      "category": "Plan Xerox/Printouts"
+    },
+    {
+      "id": 420,
+      "name": "Plan reduce/ enlarge",
+      "price": 100,
+      "price_back": 0,
+      "paperName": null,
+      "paperGroup": null,
+      "category": "Plan Xerox/Printouts"
+    },
+    {
+      "id": 421,
+      "name": "plan tracing",
+      "price": 150,
+      "price_back": 0,
+      "paperName": "A1/24\" 95gsm 100 Meters 3\" Core Tracing",
+      "paperGroup": null,
+      "category": "Plan Xerox/Printouts"
+    },
+    {
+      "id": 422,
+      "name": "A2 Colour Xerox",
+      "price": 300,
+      "price_back": 0,
+      "paperName": "A2/18\" 235 gsm Photoglassy 30 Meter 2\" C",
+      "paperGroup": null,
+      "category": "inkjet prints"
+    },
+    {
+      "id": 423,
+      "name": "A1 Colour Xerox",
+      "price": 400,
+      "price_back": 0,
+      "paperName": "A1/24\" 235 gsm Photoglassy 30 Meter 2\" C",
+      "paperGroup": null,
+      "category": "inkjet prints"
+    },
+    {
+      "id": 424,
+      "name": "A0 Colour Xerox",
+      "price": 500,
+      "price_back": 0,
+      "paperName": "A0/36\" 235 gsm Photoglassy 30 Meter 2\" C",
+      "paperGroup": null,
+      "category": "inkjet prints"
+    },
+    {
+      "id": 425,
+      "name": "A0+ Colour Xerox",
+      "price": 600,
+      "price_back": 0,
+      "paperName": null,
+      "paperGroup": null,
+      "category": null
+    },
+    {
+      "id": 426,
+      "name": "A2 B/w print",
+      "price": 40,
+      "price_back": 40,
+      "paperName": "A2/18'' 90 gsm 150 meters 3'' Core",
+      "paperGroup": null,
+      "category": "Plan Xerox/Printouts"
+    },
+    {
+      "id": 427,
+      "name": "A1 B/w print",
+      "price": 60,
+      "price_back": 60,
+      "paperName": "A1/24\" 90 gsm 150 meters 3'' Core",
+      "paperGroup": null,
+      "category": "Plan Xerox/Printouts"
+    },
+    {
+      "id": 428,
+      "name": "A0 B/w print",
+      "price": 90,
+      "price_back": 90,
+      "paperName": "A0/36\" 90 gsm 150 meters 3'' Core",
+      "paperGroup": null,
+      "category": "Plan Xerox/Printouts"
+    },
+    {
+      "id": 429,
+      "name": "A0+ Plan Print",
+      "price": 120,
+      "price_back": 120,
+      "paperName": null,
+      "paperGroup": null,
+      "category": null
+    },
+    {
+      "id": 430,
+      "name": "A2 Inkjet Paper",
+      "price": 200,
+      "price_back": 0,
+      "paperName": "A1/24\" 110 gsm 50 meters 2\" Core",
+      "paperGroup": null,
+      "category": "inkjet prints"
+    },
+    {
+      "id": 431,
+      "name": "A1 Inkjet (Paper)",
+      "price": 300,
+      "price_back": 0,
+      "paperName": "A1/24\" 110 gsm 50 meters 2\" Core",
+      "paperGroup": null,
+      "category": "inkjet prints"
+    },
+    {
+      "id": 432,
+      "name": "A0 Inkjet ( Paper )",
+      "price": 400,
+      "price_back": 0,
+      "paperName": "A0/36\" 110 gsm 50 meters 2\" Core",
+      "paperGroup": null,
+      "category": "inkjet prints"
+    },
+    {
+      "id": 433,
+      "name": "A2 Inkjet (PhotoGlos Brd)",
+      "price": 300,
+      "price_back": 0,
+      "paperName": "A1/24\" 235 gsm Photoglassy 30 Meter 2\" C",
+      "paperGroup": null,
+      "category": "inkjet prints"
+    },
+    {
+      "id": 434,
+      "name": "A1 Inkjet (PhotoGlos Brd)",
+      "price": 600,
+      "price_back": 0,
+      "paperName": "A1/24\" 235 gsm Photoglassy 30 Meter 2\" C",
+      "paperGroup": null,
+      "category": "inkjet prints"
+    },
+    {
+      "id": 435,
+      "name": "A0 Inkjet (PhotoGlos Brd)",
+      "price": 1200,
+      "price_back": 0,
+      "paperName": "A0/36\" 235 gsm Photoglassy 30 Meter 2\" C",
+      "paperGroup": null,
+      "category": "inkjet prints"
+    },
+    {
+      "id": 436,
+      "name": "id card lamination",
+      "price": 12,
+      "price_back": 0,
+      "paperName": null,
+      "paperGroup": "ID Card Lamination Pouch",
+      "category": "Laminations"
+    },
+    {
+      "id": 437,
+      "name": "ID card Die Cut",
+      "price": 15,
+      "price_back": 0,
+      "paperName": null,
+      "paperGroup": null,
+      "category": null
+    },
+    {
+      "id": 438,
+      "name": "A5 Lamination",
+      "price": 15,
+      "price_back": 0,
+      "paperName": null,
+      "paperGroup": null,
+      "category": null
+    },
+    {
+      "id": 439,
+      "name": "A4 lamination",
+      "price": 20,
+      "price_back": 0,
+      "paperName": null,
+      "paperGroup": "A4 lamination pouch",
+      "category": "Laminations"
+    },
+    {
+      "id": 440,
+      "name": "Fs lamination",
+      "price": 30,
+      "price_back": 0,
+      "paperName": null,
+      "paperGroup": "FS lamination pouch",
+      "category": "Laminations"
+    },
+    {
+      "id": 441,
+      "name": "A3 lamination",
+      "price": 40,
+      "price_back": 0,
+      "paperName": null,
+      "paperGroup": "A3 lamination pouch",
+      "category": "Laminations"
+    },
+    {
+      "id": 442,
+      "name": "A0 lamination",
+      "price": 0,
+      "price_back": 0,
+      "paperName": null,
+      "paperGroup": "A2-A0 Lamination rolls",
+      "category": "Laminations"
+    },
+    {
+      "id": 443,
+      "name": "a1 lamination",
+      "price": 0,
+      "price_back": 0,
+      "paperName": null,
+      "paperGroup": "A2-A0 Lamination rolls",
+      "category": "Laminations"
+    },
+    {
+      "id": 444,
+      "name": "a2 lamination",
+      "price": 0,
+      "price_back": 0,
+      "paperName": null,
+      "paperGroup": "A2-A0 Lamination rolls",
+      "category": "Laminations"
+    },
+    {
+      "id": 445,
+      "name": "Thermal Lamination",
+      "price": 100,
+      "price_back": 0,
+      "paperName": null,
+      "paperGroup": "Thermal lamination rolls",
+      "category": "Laminations"
+    },
+    {
+      "id": 446,
+      "name": "soft binding",
+      "price": 40,
+      "price_back": 0,
+      "paperName": null,
+      "paperGroup": null,
+      "category": "Bindings"
+    },
+    {
+      "id": 447,
+      "name": "hard binding",
+      "price": 60,
+      "price_back": 0,
+      "paperName": null,
+      "paperGroup": null,
+      "category": "Bindings"
+    },
+    {
+      "id": 448,
+      "name": "Project binding",
+      "price": 150,
+      "price_back": 0,
+      "paperName": null,
+      "paperGroup": null,
+      "category": "Bindings"
+    },
+    {
+      "id": 449,
+      "name": "spiral binding",
+      "price": 40,
+      "price_back": 0,
+      "paperName": null,
+      "paperGroup": "spiral rings",
+      "category": "Bindings"
+    },
+    {
+      "id": 450,
+      "name": "wiro binding",
+      "price": 60,
+      "price_back": 0,
+      "paperName": null,
+      "paperGroup": "Wiro Binding ring (in nos)",
+      "category": "Bindings"
+    },
+    {
+      "id": 451,
+      "name": "comb binding",
+      "price": 50,
+      "price_back": 0,
+      "paperName": null,
+      "paperGroup": "Comb binding rings (in nos)",
+      "category": "Bindings"
+    },
+    {
+      "id": 452,
+      "name": "wrapper binding",
+      "price": 50,
+      "price_back": 0,
+      "paperName": null,
+      "paperGroup": null,
+      "category": "Bindings"
+    },
+    {
+      "id": 453,
+      "name": "pin binding",
+      "price": 20,
+      "price_back": 0,
+      "paperName": "A4 70gsm copier",
+      "paperGroup": null,
+      "category": "Bindings"
+    },
+    {
+      "id": 454,
+      "name": "pinning",
+      "price": 10,
+      "price_back": 0,
+      "paperName": null,
+      "paperGroup": "others",
+      "category": "Others"
+    },
+    {
+      "id": 455,
+      "name": "Staple Binding",
+      "price": 0,
+      "price_back": 0,
+      "paperName": null,
+      "paperGroup": "others",
+      "category": "Bindings"
+    },
+    {
+      "id": 456,
+      "name": "Pasting",
+      "price": 0,
+      "price_back": 0,
+      "paperName": null,
+      "paperGroup": "others",
+      "category": "Others"
+    },
+    {
+      "id": 457,
+      "name": "stick binding",
+      "price": 0,
+      "price_back": 0,
+      "paperName": null,
+      "paperGroup": null,
+      "category": "Bindings"
+    },
+    {
+      "id": 458,
+      "name": "Holes",
+      "price": 0,
+      "price_back": 0,
+      "paperName": null,
+      "paperGroup": null,
+      "category": null
+    },
+    {
+      "id": 459,
+      "name": "Perforation",
+      "price": 0,
+      "price_back": 0,
+      "paperName": null,
+      "paperGroup": null,
+      "category": null
+    },
+    {
+      "id": 460,
+      "name": "board creasing",
+      "price": 0,
+      "price_back": 0,
+      "paperName": null,
+      "paperGroup": null,
+      "category": "Others"
+    },
+    {
+      "id": 461,
+      "name": "A4 Scanning",
+      "price": 20,
+      "price_back": 0,
+      "paperName": null,
+      "paperGroup": null,
+      "category": "Scanning"
+    },
+    {
+      "id": 462,
+      "name": "A3 Scanning",
+      "price": 30,
+      "price_back": 0,
+      "paperName": null,
+      "paperGroup": null,
+      "category": "Scanning"
+    },
+    {
+      "id": 463,
+      "name": "A2 Scanning",
+      "price": 100,
+      "price_back": 0,
+      "paperName": null,
+      "paperGroup": "others",
+      "category": "Scanning"
+    },
+    {
+      "id": 464,
+      "name": "A1 Scanning",
+      "price": 150,
+      "price_back": 0,
+      "paperName": null,
+      "paperGroup": "others",
+      "category": "Scanning"
+    },
+    {
+      "id": 465,
+      "name": "A0 Scanning",
+      "price": 200,
+      "price_back": 0,
+      "paperName": null,
+      "paperGroup": "others",
+      "category": "Scanning"
+    },
+    {
+      "id": 466,
+      "name": "designing",
+      "price": 200,
+      "price_back": 0,
+      "paperName": null,
+      "paperGroup": null,
+      "category": "Designing"
+    },
+    {
+      "id": 467,
+      "name": "Editing/Typing",
+      "price": 0,
+      "price_back": 0,
+      "paperName": null,
+      "paperGroup": null,
+      "category": "Others"
+    },
+    {
+      "id": 468,
+      "name": "cutting",
+      "price": 0,
+      "price_back": 0,
+      "paperName": null,
+      "paperGroup": null,
+      "category": "Cutting/scoring/creasing"
+    },
+    {
+      "id": 469,
+      "name": "scoring",
+      "price": 0,
+      "price_back": 0,
+      "paperName": null,
+      "paperGroup": null,
+      "category": "Cutting/scoring/creasing"
+    },
+    {
+      "id": 470,
+      "name": "A5,A6,Office Envelope Sales(1-25)",
+      "price": 3,
+      "price_back": 0,
+      "paperName": null,
+      "paperGroup": "Envelope Covers",
+      "category": "Others"
+    },
+    {
+      "id": 471,
+      "name": "A5,A6,Office Envelope Sales >25",
+      "price": 2.5,
+      "price_back": 0,
+      "paperName": null,
+      "paperGroup": "Envelope Covers",
+      "category": "Others"
+    },
+    {
+      "id": 472,
+      "name": "A4 Envelope ( 1-25)",
+      "price": 5,
+      "price_back": 0,
+      "paperName": null,
+      "paperGroup": "Envelope Covers",
+      "category": "Others"
+    },
+    {
+      "id": 473,
+      "name": "A4 Envelope >25",
+      "price": 4,
+      "price_back": 0,
+      "paperName": null,
+      "paperGroup": "Envelope Covers",
+      "category": "Others"
+    },
+    {
+      "id": 474,
+      "name": "Metallic Envelope ( 1-25)",
+      "price": 12,
+      "price_back": 0,
+      "paperName": null,
+      "paperGroup": "Envelope Covers",
+      "category": "Others"
+    },
+    {
+      "id": 475,
+      "name": "Metallic Envelope >25",
+      "price": 11,
+      "price_back": 0,
+      "paperName": null,
+      "paperGroup": "Envelope Covers",
+      "category": "Others"
+    },
+    {
+      "id": 476,
+      "name": "Stick Files",
+      "price": 20,
+      "price_back": 0,
+      "paperName": null,
+      "paperGroup": "others",
+      "category": "Others"
+    },
+    {
+      "id": 477,
+      "name": "paper/board sales",
+      "price": 1,
+      "price_back": 0,
+      "paperName": null,
+      "paperGroup": null,
+      "category": "Others"
+    },
+    {
+      "id": 478,
+      "name": "plain sticker sales",
+      "price": 20,
+      "price_back": 0,
+      "paperName": null,
+      "paperGroup": "A3+ Sticker Sheet",
+      "category": "Others"
+    },
+    {
+      "id": 479,
+      "name": "rope/holder sales",
+      "price": 0,
+      "price_back": 0,
+      "paperName": null,
+      "paperGroup": null,
+      "category": "Others"
+    },
+    {
+      "id": 480,
+      "name": "dvd writing/sales",
+      "price": 0,
+      "price_back": 0,
+      "paperName": null,
+      "paperGroup": null,
+      "category": "Others"
+    },
+    {
+      "id": 481,
+      "name": "cd writing/sales",
+      "price": 0,
+      "price_back": 0,
+      "paperName": null,
+      "paperGroup": null,
+      "category": "Others"
+    },
+    {
+      "id": 482,
+      "name": "a4 synthetic sales",
+      "price": 0,
+      "price_back": 0,
+      "paperName": "Rubber Sheet ID Card 250 gsm",
+      "paperGroup": null,
+      "category": "Others"
+    },
+    {
+      "id": 483,
+      "name": "mail/net usage",
+      "price": 20,
+      "price_back": 0,
+      "paperName": null,
+      "paperGroup": "others",
+      "category": "Others"
+    },
+    {
+      "id": 484,
+      "name": "generator charge",
+      "price": 0,
+      "price_back": 0,
+      "paperName": "A4 70gsm copier",
+      "paperGroup": null,
+      "category": "Others"
+    },
+    {
+      "id": 485,
+      "name": "others",
+      "price": 0,
+      "price_back": 0,
+      "paperName": null,
+      "paperGroup": "toners and catridges",
+      "category": "Others"
+    },
+    {
+      "id": 486,
+      "name": "Labour Charges",
+      "price": 0,
+      "price_back": 0,
+      "paperName": null,
+      "paperGroup": null,
+      "category": null
+    },
+    {
+      "id": 487,
+      "name": "Courier Charge",
+      "price": 0,
+      "price_back": 0,
+      "paperName": null,
+      "paperGroup": "others",
+      "category": "Others"
+    },
+    {
+      "id": 488,
+      "name": "130 Art 1st",
+      "price": 30,
+      "price_back": 30,
+      "paperName": null,
+      "paperGroup": "130 gsm all boards (a3,+1,+3,13*19)",
+      "category": "Colour Xerox and printouts"
+    },
+    {
+      "id": 489,
+      "name": "130 Art Add",
+      "price": 15,
+      "price_back": 15,
+      "paperName": null,
+      "paperGroup": "130 gsm all boards (a3,+1,+3,13*19)",
+      "category": "Colour Xerox and printouts"
+    },
+    {
+      "id": 490,
+      "name": "170 Art 1st",
+      "price": 30,
+      "price_back": 30,
+      "paperName": null,
+      "paperGroup": "170 gsm all boards (a3,+1,+3,13*19)",
+      "category": "Colour Xerox and printouts"
+    },
+    {
+      "id": 491,
+      "name": "170 Art Add",
+      "price": 15,
+      "price_back": 15,
+      "paperName": null,
+      "paperGroup": "170 gsm all boards (a3,+1,+3,13*19)",
+      "category": "Colour Xerox and printouts"
+    },
+    {
+      "id": 492,
+      "name": "220 , 250 Art 1st",
+      "price": 30,
+      "price_back": 30,
+      "paperName": null,
+      "paperGroup": null,
+      "category": null
+    },
+    {
+      "id": 493,
+      "name": "220 , 250 Art Add",
+      "price": 18,
+      "price_back": 18,
+      "paperName": null,
+      "paperGroup": null,
+      "category": null
+    },
+    {
+      "id": 494,
+      "name": "280 & 300 Art 1st",
+      "price": 30,
+      "price_back": 30,
+      "paperName": null,
+      "paperGroup": null,
+      "category": null
+    },
+    {
+      "id": 495,
+      "name": "280 & 300 Art Add",
+      "price": 18,
+      "price_back": 18,
+      "paperName": null,
+      "paperGroup": null,
+      "category": null
+    }
+  ]
+}

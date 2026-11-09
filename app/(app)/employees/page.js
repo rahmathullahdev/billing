@@ -118,41 +118,52 @@ export default function ManageEmployeePage() {
         </div>
       </div>
 
-      <div className="table-responsive rounded shadow-sm bg-white border-0">
-        <table className="particulars-table data-table w-100">
-          <thead><tr style={{ backgroundColor: '#002142' }}>
-            <th className="text-center" style={{ width: '60px' }}>#</th>
-            <th>FULL NAME</th>
-            <th>PHONE</th>
-            <th>EMAIL</th>
-            <th>DESIGNATION</th>
-            <th>BRANCH</th>
-            <th>SALARY</th>
-            <th className="text-center">STATUS</th>
-            <th className="text-center">ACTIONS</th>
-          </tr></thead>
+      <div className="table-responsive border rounded-3 shadow-sm bg-white mb-3">
+        <table className="table app-table align-middle mb-0" style={{ minWidth: '1000px' }}>
+          <thead>
+            <tr>
+              <th className="th-center" style={{ width: '60px' }}>#</th>
+              <th className="th-left" style={{ minWidth: '200px' }}>FULL NAME</th>
+              <th className="th-left" style={{ width: '130px' }}>PHONE</th>
+              <th className="th-left" style={{ minWidth: '180px' }}>EMAIL</th>
+              <th className="th-center" style={{ width: '130px' }}>DESIGNATION</th>
+              <th className="th-center" style={{ width: '140px' }}>BRANCH</th>
+              <th className="th-right" style={{ width: '120px' }}>SALARY (₹)</th>
+              <th className="th-center" style={{ width: '110px' }}>STATUS</th>
+              <th className="th-right" style={{ width: '120px' }}>ACTIONS</th>
+            </tr>
+          </thead>
           <tbody>
-            {loading ? <tr><td colSpan="9" className="text-center py-5">Loading...</td></tr>
-              : paged.length === 0 ? <tr><td colSpan="9" className="text-center py-5 text-muted">No employees found.</td></tr>
+            {loading ? <tr><td colSpan="9" className="text-center py-5"><div className="spinner-border text-primary spinner-border-sm me-2"></div>Loading employees...</td></tr>
+              : paged.length === 0 ? <tr><td colSpan="9" className="text-center py-5 text-muted"><i className="bi bi-people fs-2 d-block mb-2 text-secondary"></i>No employees found.</td></tr>
                 : paged.map((emp, i) => (
-                  <tr key={itemId(emp) || i}>
-                    <td className="text-center fw-bold">{page * size + i + 1}</td>
-                    <td className="fw-bold" style={{ color: '#002142' }}>{emp.firstName ? `${emp.firstName} ${emp.lastName || ''}` : (emp.name || '-')}</td>
-                    <td>{emp.phone || '-'}</td>
-                    <td>{emp.email || '-'}</td>
-                    <td><span className="badge bg-light text-dark border">{emp.designation || 'Staff'}</span></td>
-                    <td>{emp.branchName || '-'}</td>
-                    <td className="text-success fw-bold">₹{Number(emp.salary || 0).toFixed(2)}</td>
-                    <td className="text-center">
-                      <button className={`btn btn-sm rounded-pill px-3 ${emp.isActive === false ? 'btn-danger' : 'btn-success'}`} onClick={() => handleToggle(emp)}>{emp.isActive === false ? 'Inactive' : 'Active'}</button>
+                  <tr key={itemId(emp) || i} className="table-row-hover">
+                    <td className="td-center fw-bold text-muted">
+                      <span className="badge bg-light text-dark border px-2 py-1 font-monospace">{page * size + i + 1}</span>
                     </td>
-                    <td className="text-center">
-                      <button className="btn btn-sm btn-outline-primary me-2" onClick={() => { setEditingItem(emp); setFormData({ firstName: emp.firstName || (emp.name ? emp.name.split(' ')[0] : ''), lastName: emp.lastName || (emp.name ? emp.name.split(' ').slice(1).join(' ') : ''), phone: emp.phone || '', email: emp.email || '', role: emp.role || 'User', dateOfJoining: emp.dateOfJoining || '', dateOfResign: emp.dateOfResign || '', designation: emp.designation || '', branchName: emp.branchName || '', branchId: emp.branchId || '', salary: emp.salary || 0, photo: emp.photo || '', resume: emp.resume || '' }); setModalOpen(true); }}>
-                        <i className="bi bi-pencil me-1"></i> Edit
+                    <td className="td-left fw-bold" style={{ color: '#002142' }}>{emp.firstName ? `${emp.firstName} ${emp.lastName || ''}` : (emp.name || '-')}</td>
+                    <td className="td-left text-muted">{emp.phone || '-'}</td>
+                    <td className="td-left text-muted">{emp.email || '-'}</td>
+                    <td className="td-center"><span className="badge-pill-cyan">{emp.designation || 'Staff'}</span></td>
+                    <td className="td-center"><span className="badge-pill-slate">{emp.branchName || '-'}</span></td>
+                    <td className="td-right text-success fw-bold">₹ {Number(emp.salary || 0).toFixed(2)}</td>
+                    <td className="td-center">
+                      <button 
+                        type="button"
+                        onClick={() => handleToggle(emp)} 
+                        className={`btn btn-sm border-0 p-0 ${emp.isActive !== false ? 'badge-pill-success' : 'badge-pill-danger'}`}
+                        style={{ cursor: 'pointer' }}
+                        title="Click to toggle status"
+                      >
+                        <i className={`bi bi-${emp.isActive !== false ? 'check-circle-fill' : 'x-circle-fill'}`} style={{ fontSize: '0.65rem' }}></i>
+                        <span>{emp.isActive !== false ? 'Active' : 'Inactive'}</span>
                       </button>
-                      <button className="btn btn-sm btn-outline-danger" onClick={() => setDeleteConfirmId(itemId(emp))}>
-                        <i className="bi bi-trash me-1"></i> Delete
-                      </button>
+                    </td>
+                    <td className="td-right">
+                      <div className="d-inline-flex align-items-center gap-1">
+                        <button className="btn btn-sm btn-outline-secondary p-1 d-inline-flex align-items-center justify-content-center shadow-none" style={{ width: '30px', height: '30px', borderRadius: '6px' }} onClick={() => { setEditingItem(emp); setFormData({ firstName: emp.firstName || (emp.name ? emp.name.split(' ')[0] : ''), lastName: emp.lastName || (emp.name ? emp.name.split(' ').slice(1).join(' ') : ''), phone: emp.phone || '', email: emp.email || '', role: emp.role || 'User', dateOfJoining: emp.dateOfJoining || '', dateOfResign: emp.dateOfResign || '', designation: emp.designation || '', branchName: emp.branchName || '', branchId: emp.branchId || '', salary: emp.salary || 0, photo: emp.photo || '', resume: emp.resume || '' }); setModalOpen(true); }} title="Edit"><i className="bi bi-pencil" style={{ fontSize: '0.8rem' }}></i></button>
+                        <button className="btn btn-sm btn-outline-danger p-1 d-inline-flex align-items-center justify-content-center shadow-none" style={{ width: '30px', height: '30px', borderRadius: '6px' }} onClick={() => setDeleteConfirmId(itemId(emp))} title="Delete"><i className="bi bi-trash" style={{ fontSize: '0.8rem' }}></i></button>
+                      </div>
                     </td>
                   </tr>
                 ))}

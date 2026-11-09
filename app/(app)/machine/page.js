@@ -115,42 +115,58 @@ export default function ManageMachinePage() {
         </div>
       </div>
 
-      <div className="table-responsive rounded shadow-sm bg-white border-0">
-        <table className="particulars-table data-table w-100">
-          <thead><tr style={{ backgroundColor: '#002142' }}>
-            <th className="text-center" style={{ width: '60px' }}>#</th>
-            <th>MACHINE ID</th>
-            <th>MACHINE NAME</th>
-            <th>CATEGORY</th>
-            <th>SERIAL NO</th>
-            <th>READING</th>
-            <th>CONTACT PERSON</th>
-            <th>BRANCH</th>
-            <th className="text-center">STATUS</th>
-            <th className="text-center">ACTIONS</th>
-          </tr></thead>
+      <div className="table-responsive border rounded-3 shadow-sm bg-white mb-3">
+        <table className="table app-table align-middle mb-0" style={{ minWidth: '1100px' }}>
+          <thead>
+            <tr>
+              <th className="th-center" style={{ width: '60px' }}>#</th>
+              <th className="th-left" style={{ width: '130px' }}>MACHINE ID</th>
+              <th className="th-left" style={{ minWidth: '200px' }}>MACHINE NAME</th>
+              <th className="th-center" style={{ minWidth: '160px' }}>CATEGORY</th>
+              <th className="th-left" style={{ width: '130px' }}>SERIAL NO</th>
+              <th className="th-center" style={{ width: '100px' }}>READING</th>
+              <th className="th-left" style={{ minWidth: '150px' }}>CONTACT</th>
+              <th className="th-center" style={{ minWidth: '140px' }}>BRANCH</th>
+              <th className="th-center" style={{ width: '110px' }}>STATUS</th>
+              <th className="th-right" style={{ width: '140px' }}>ACTIONS</th>
+            </tr>
+          </thead>
           <tbody>
-            {loading ? <tr><td colSpan="10" className="text-center py-5"><div className="spinner-border text-primary me-2"></div>Loading machines...</td></tr>
+            {loading ? <tr><td colSpan="10" className="text-center py-5"><div className="spinner-border text-primary spinner-border-sm me-2"></div>Loading machines...</td></tr>
               : paged.length === 0 ? <tr><td colSpan="10" className="text-center py-5 text-muted"><i className="bi bi-printer fs-1 d-block mb-2 text-secondary"></i>No machines found.</td></tr>
                 : paged.map((m, i) => (
-                  <tr key={itemId(m) || i}>
-                    <td className="text-center fw-bold">{page * size + i + 1}</td>
-                    <td className="fw-bold text-primary">{m.machineId || '-'}</td>
-                    <td className="fw-bold" style={{ color: '#002142' }}>{m.name}</td>
-                    <td><span className="badge bg-light text-dark border">{m.machineCategory || '-'}</span></td>
-                    <td>{m.serialNumber || '-'}</td>
-                    <td>{m.reading || '0'}</td>
-                    <td>
-                      {m.mobile && <div className="small"><i className="bi bi-telephone text-primary me-1"></i>{m.mobile}</div>}
-                      {!m.mobile && m.name && <span className="text-muted">-</span>}
+                  <tr key={itemId(m) || i} className="table-row-hover">
+                    <td className="td-center fw-bold text-muted">
+                      <span className="badge bg-light text-dark border px-2 py-1 font-monospace">{page * size + i + 1}</span>
                     </td>
-                    <td><span className="badge bg-light text-dark border">{m.branchName || '-'}</span></td>
-                    <td className="text-center">
-                      <button className={`btn btn-sm rounded-pill px-3 ${m.isActive === false ? 'btn-danger' : 'btn-success'}`} onClick={() => handleToggle(m)}>{m.isActive === false ? 'Inactive' : 'Active'}</button>
+                    <td className="td-left fw-bold text-primary font-monospace">{m.machineId || '-'}</td>
+                    <td className="td-left fw-bold" style={{ color: '#002142' }}>{m.name}</td>
+                    <td className="td-center"><span className="badge-pill-cyan">{m.machineCategory || '-'}</span></td>
+                    <td className="td-left text-muted">{m.serialNumber || '-'}</td>
+                    <td className="td-center fw-semibold text-secondary">
+                      <span className="badge bg-light text-secondary border px-2 py-1">{m.reading || '0'}</span>
                     </td>
-                    <td className="text-center">
-                      <button className="btn btn-sm btn-outline-primary me-2" onClick={() => { setEditingItem(m); setFormData({ ...m, isActive: m.isActive !== false }); setShowAddForm(true); }}><i className="bi bi-pencil me-1"></i> Edit</button>
-                      <button className="btn btn-sm btn-outline-danger" onClick={() => handleDelete(itemId(m))}><i className="bi bi-trash me-1"></i> Delete</button>
+                    <td className="td-left">
+                      {m.mobile ? <div className="small"><i className="bi bi-telephone text-primary me-1"></i>{m.mobile}</div> : <span className="text-muted">-</span>}
+                    </td>
+                    <td className="td-center"><span className="badge-pill-slate">{m.branchName || '-'}</span></td>
+                    <td className="td-center">
+                      <button 
+                        type="button"
+                        onClick={() => handleToggle(m)} 
+                        className={`btn btn-sm border-0 p-0 ${m.isActive !== false ? 'badge-pill-success' : 'badge-pill-danger'}`}
+                        style={{ cursor: 'pointer' }}
+                        title="Click to toggle status"
+                      >
+                        <i className={`bi bi-${m.isActive !== false ? 'check-circle-fill' : 'x-circle-fill'}`} style={{ fontSize: '0.65rem' }}></i>
+                        <span>{m.isActive !== false ? 'Active' : 'Inactive'}</span>
+                      </button>
+                    </td>
+                    <td className="td-right">
+                      <div className="d-inline-flex align-items-center gap-1">
+                        <button className="btn btn-sm btn-outline-secondary p-1 d-inline-flex align-items-center justify-content-center shadow-none" style={{ width: '30px', height: '30px', borderRadius: '6px' }} onClick={() => { setEditingItem(m); setFormData({ ...m, isActive: m.isActive !== false }); setShowAddForm(true); }} title="Edit"><i className="bi bi-pencil" style={{ fontSize: '0.8rem' }}></i></button>
+                        <button className="btn btn-sm btn-outline-danger p-1 d-inline-flex align-items-center justify-content-center shadow-none" style={{ width: '30px', height: '30px', borderRadius: '6px' }} onClick={() => handleDelete(itemId(m))} title="Delete"><i className="bi bi-trash" style={{ fontSize: '0.8rem' }}></i></button>
+                      </div>
                     </td>
                   </tr>
                 ))}
