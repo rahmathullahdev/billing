@@ -328,13 +328,13 @@ export default function ParticularsPage() {
         </div>
 
         {/* Toolbar: Search, Filters & Counters */}
-        <div className="d-flex flex-wrap justify-content-between align-items-center mb-3 pb-3 border-bottom gap-3">
+        <div className="d-flex flex-column flex-lg-row justify-content-between align-items-stretch align-items-lg-center mb-3 pb-3 border-bottom gap-3">
           {/* Status Tabs */}
-          <div className="d-flex align-items-center gap-1 bg-light p-1 rounded-pill border">
+          <div className="d-flex align-items-center gap-1 bg-light p-1 rounded-pill border" style={{ width: 'fit-content' }}>
             <button 
               type="button" 
               className={`btn btn-sm rounded-pill px-3 fw-semibold border-0 ${statusFilter === 'all' ? 'bg-white shadow-sm' : 'text-muted'}`}
-              style={{ color: statusFilter === 'all' ? '#002142' : undefined, fontSize: '0.8rem' }}
+              style={{ color: statusFilter === 'all' ? '#002142' : undefined, fontSize: '0.82rem', height: '34px', display: 'flex', alignItems: 'center' }}
               onClick={() => { setStatusFilter('all'); setPage(0); }}
             >
               All ({particulars.length})
@@ -342,7 +342,7 @@ export default function ParticularsPage() {
             <button 
               type="button" 
               className={`btn btn-sm rounded-pill px-3 fw-semibold border-0 ${statusFilter === 'active' ? 'bg-white shadow-sm' : 'text-muted'}`}
-              style={{ color: statusFilter === 'active' ? '#059669' : undefined, fontSize: '0.8rem' }}
+              style={{ color: statusFilter === 'active' ? '#059669' : undefined, fontSize: '0.82rem', height: '34px', display: 'flex', alignItems: 'center' }}
               onClick={() => { setStatusFilter('active'); setPage(0); }}
             >
               Active ({activeCount})
@@ -350,7 +350,7 @@ export default function ParticularsPage() {
             <button 
               type="button" 
               className={`btn btn-sm rounded-pill px-3 fw-semibold border-0 ${statusFilter === 'inactive' ? 'bg-white shadow-sm' : 'text-muted'}`}
-              style={{ color: statusFilter === 'inactive' ? '#dc2626' : undefined, fontSize: '0.8rem' }}
+              style={{ color: statusFilter === 'inactive' ? '#dc2626' : undefined, fontSize: '0.82rem', height: '34px', display: 'flex', alignItems: 'center' }}
               onClick={() => { setStatusFilter('inactive'); setPage(0); }}
             >
               Inactive ({inactiveCount})
@@ -358,11 +358,11 @@ export default function ParticularsPage() {
           </div>
 
           {/* Search & Category Filter */}
-          <div className="d-flex flex-wrap align-items-center gap-2">
+          <div className="d-flex flex-sm-nowrap align-items-center gap-2">
             {/* Category Filter */}
             <select 
               className="form-select form-select-sm shadow-none rounded-pill" 
-              style={{ maxWidth: '200px', fontSize: '0.82rem', height: '36px' }}
+              style={{ minWidth: '170px', maxWidth: '210px', fontSize: '0.84rem', height: '38px', borderColor: '#e2e8f0', cursor: 'pointer' }}
               value={categoryFilter}
               onChange={e => { setCategoryFilter(e.target.value); setPage(0); }}
             >
@@ -373,29 +373,37 @@ export default function ParticularsPage() {
             </select>
 
             {/* Search Input */}
-            <div className="input-group" style={{ maxWidth: '300px' }}>
-              <span className="input-group-text bg-white border-end-0 text-muted rounded-start-pill ps-3">
-                <i className="bi bi-search"></i>
-              </span>
+            <div className="position-relative" style={{ minWidth: '240px', maxWidth: '300px', flex: '1 1 auto' }}>
+              <i 
+                className="bi bi-search position-absolute text-muted" 
+                style={{ left: '14px', top: '50%', transform: 'translateY(-50%)', fontSize: '0.85rem', pointerEvents: 'none' }}
+              ></i>
               <input 
                 type="text" 
                 placeholder="Search name, ID, paper..." 
-                className="form-control border-start-0 border-end-0 shadow-none py-1" 
-                style={{ fontSize: '0.84rem', height: '36px' }} 
+                className="form-control form-control-sm rounded-pill shadow-none" 
+                style={{ 
+                  height: '38px', 
+                  fontSize: '0.84rem', 
+                  paddingLeft: '38px', 
+                  paddingRight: search ? '36px' : '14px',
+                  borderColor: '#e2e8f0',
+                  backgroundColor: '#ffffff'
+                }} 
                 value={search} 
                 onChange={e => { setSearch(e.target.value); setPage(0); }} 
               />
               {search && (
                 <button 
-                  className="btn btn-outline-secondary border-start-0 bg-white text-muted" 
+                  className="btn btn-sm btn-link position-absolute top-50 translate-middle-y text-muted p-0 text-decoration-none" 
+                  style={{ right: '12px', zIndex: 5, lineHeight: 1 }} 
                   type="button" 
                   onClick={() => { setSearch(''); setPage(0); }}
                   title="Clear search"
                 >
-                  <i className="bi bi-x"></i>
+                  <i className="bi bi-x-circle-fill" style={{ fontSize: '0.9rem' }}></i>
                 </button>
               )}
-              <span className="input-group-text bg-white border-start-0 rounded-end-pill pe-3"></span>
             </div>
           </div>
         </div>
