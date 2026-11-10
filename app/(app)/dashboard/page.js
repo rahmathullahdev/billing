@@ -8,6 +8,7 @@ export default function DashboardPage() {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(false);
   const [initialLoading, setInitialLoading] = useState(true);
+  const [loadError, setLoadError] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
 
@@ -41,6 +42,7 @@ export default function DashboardPage() {
   const loadDashboardData = async (filterVal = presetRange, startDate = dateFrom, endDate = dateTo, paymentType = paymentMode) => {
     try {
       setLoading(true);
+      setLoadError(false);
       const params = new URLSearchParams();
       if (filterVal) params.set('filter', filterVal);
       if (paymentType) params.set('paymentType', paymentType);
@@ -58,6 +60,7 @@ export default function DashboardPage() {
       filterOrdersList(orders, customerFilter, selectedCustomer);
     } catch (error) {
       console.error("Error loading dashboard data:", error);
+      setLoadError(true);
     } finally {
       setLoading(false);
       setInitialLoading(false);
@@ -326,6 +329,14 @@ export default function DashboardPage() {
   return (
     <div className="dashboard-wrapper">
       <div className="dashboard-container">
+        {loadError && (
+          <div className="alert alert-danger d-flex align-items-center justify-content-between gap-3">
+            <span><i className="bi bi-exclamation-triangle me-2"></i>Could not refresh dashboard data.</span>
+            <button className="btn btn-sm btn-outline-danger fw-semibold" onClick={() => loadDashboardData(presetRange, dateFrom, dateTo, paymentMode)}>
+              Retry
+            </button>
+          </div>
+        )}
         {/* Top 2 Stat Cards matching original React Dashboard */}
         <div className="stats-grid">
           <div className="stat-card">

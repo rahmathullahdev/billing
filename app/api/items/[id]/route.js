@@ -19,8 +19,10 @@ export async function PUT(request, { params }) {
   try {
     const body = await request.json();
     const updated = await sanityClient.patch(id).set({
+      ...(body.itemId ? { itemId: body.itemId } : {}),
       name: body.name,
-      price: parseFloat(body.price) || 0,
+      category: body.category || '',
+      price: parseFloat(body.price ?? body.basePrice) || 0,
       priceBack: parseFloat(body.priceBack) || 0,
       description: body.description || '',
     }).commit();

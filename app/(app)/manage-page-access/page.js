@@ -11,6 +11,7 @@ const DEFAULT_RULES = [
   { page: 'BILLS_ALL', admin: true, manager: true, employee: true },
   { page: 'BILLS_TODAY', admin: true, manager: true, employee: true },
   { page: 'ORDERS', admin: true, manager: true, employee: false },
+  { page: 'REFERRAL', admin: true, manager: true, employee: false },
   { page: 'CREDITS', admin: true, manager: true, employee: false },
   { page: 'CATEGORY', admin: true, manager: true, employee: false },
   { page: 'USERS', admin: true, manager: false, employee: false },

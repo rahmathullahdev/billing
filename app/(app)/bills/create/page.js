@@ -5,6 +5,38 @@ import toast from 'react-hot-toast';
 import ReceiptPopup from '@/components/ReceiptPopup';
 import { useApp } from '@/context/AppContext';
 
+const DRAFT_KEY = 'billDraft';
+const DEFAULT_SHORTCUTS = {
+  non_gst_bill: { keys: 'Enter', enabled: true },
+  gst_bill: { keys: 'Ctrl + Enter', enabled: true },
+  quick_save_bill: { keys: 'Ctrl + S', enabled: true },
+  print_receipt: { keys: 'Ctrl + P', enabled: true },
+};
+
+function matchesShortcut(e, combo) {
+  if (!combo) return false;
+  const parts = combo.toLowerCase().split('+').map((p) => p.trim()).filter(Boolean);
+  if (parts.length === 0) return false;
+  const keyPart = parts[parts.length - 1];
+  const needCtrl = parts.includes('ctrl') || parts.includes('cmd');
+  const needShift = parts.includes('shift');
+  const needAlt = parts.includes('alt');
+  const eventKey = (e.key || '').toLowerCase();
+
+  let keyMatches = false;
+  if (keyPart === 'enter') keyMatches = eventKey === 'enter';
+  else if (keyPart === 'escape' || keyPart === 'esc') keyMatches = eventKey === 'escape';
+  else if (keyPart === 'space') keyMatches = eventKey === ' ';
+  else keyMatches = eventKey === keyPart;
+
+  if (!keyMatches) return false;
+  const ctrlPressed = e.ctrlKey || e.metaKey;
+  if (needCtrl !== ctrlPressed) return false;
+  if (needShift !== e.shiftKey) return false;
+  if (needAlt !== e.altKey) return false;
+  return true;
+}
+
 function CreateBillContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -66,6 +98,10 @@ function CreateBillContent() {
   const [creditInfo, setCreditInfo] = useState(null);
   const [isCheckingCredit, setIsCheckingCredit] = useState(false);
 
+  // Draft & shortcuts
+  const [pendingDraft, setPendingDraft] = useState(null);
+  const [shortcuts, setShortcuts] = useState(DEFAULT_SHORTCUTS);
+
   // Particulars Preload & Search State
   const [allParticulars, setAllParticulars] = useState([]);
   const [activeParticularDropdownRowId, setActiveParticularDropdownRowId] = useState(null);
@@ -99,6 +135,143 @@ function CreateBillContent() {
     fetchInitialData();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isEditMode, editId]);
+
+  // Load configurable shortcuts saved from Settings.
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem('shortcutConfig');
+      if (!raw) return;
+      const saved = JSON.parse(raw);
+      if (!Array.isArray(saved)) return;
+      const map = {};
+      saved.forEach((s) => {
+        if (s?.id) map[s.id] = { keys: s.keys, enabled: s.enabled !== false };
+      });
+      setShortcuts((prev) => ({ ...prev, ...map }));
+    } catch {
+      // ignore malformed shortcut config
+    }
+  }, []);
+
+  // Surface an autosaved draft for create mode.
+  useEffect(() => {
+    if (isEditMode) return;
+    try {
+      const raw = localStorage.getItem(DRAFT_KEY);
+      if (!raw) return;
+      const parsed = JSON.parse(raw);
+      const hasContent =
+        parsed?.selectedCustomer?.customerName ||
+        parsed?.selectedEmployee ||
+        parsed?.employeeSearch ||
+        (Array.isArray(parsed?.particularsList) && parsed.particularsList.some((p) => p.isFilled));
+      if (hasContent) setPendingDraft(parsed);
+    } catch {
+      // ignore malformed drafts
+    }
+  }, [isEditMode]);
+
+  // Autosave the in-progress bill so a reload does not lose work.
+  useEffect(() => {
+    if (isEditMode) return undefined;
+    const timer = setTimeout(() => {
+      const hasContent =
+        selectedCustomer.customerName ||
+        selectedEmployee ||
+        employeeSearch ||
+        particularsList.some((p) => p.isFilled) ||
+        amountPaid ||
+        priceDiscount ||
+        tdsAmount;
+      if (!hasContent) return;
+      try {
+        localStorage.setItem(
+          DRAFT_KEY,
+          JSON.stringify({
+            selectedEmployee,
+            employeeSearch,
+            selectedCustomer,
+            customerSearch,
+            particularsList,
+            paymentType,
+            enableCredit,
+            amountPaid,
+            priceDiscount,
+            tdsAmount,
+            showExtra,
+            totals,
+            savedAt: Date.now(),
+          })
+        );
+      } catch {
+        // ignore storage failures
+      }
+    }, 800);
+    return () => clearTimeout(timer);
+  }, [
+    isEditMode,
+    selectedEmployee,
+    employeeSearch,
+    selectedCustomer,
+    customerSearch,
+    particularsList,
+    paymentType,
+    enableCredit,
+    amountPaid,
+    priceDiscount,
+    tdsAmount,
+    showExtra,
+    totals,
+  ]);
+
+  // Warn before leaving with unsaved bill content.
+  useEffect(() => {
+    if (isEditMode) return undefined;
+    const handler = (e) => {
+      const hasContent =
+        selectedCustomer.customerName || selectedEmployee || particularsList.some((p) => p.isFilled);
+      if (!hasContent) return;
+      e.preventDefault();
+      e.returnValue = '';
+    };
+    window.addEventListener('beforeunload', handler);
+    return () => window.removeEventListener('beforeunload', handler);
+  }, [isEditMode, selectedCustomer, selectedEmployee, particularsList]);
+
+  const restoreDraft = () => {
+    if (!pendingDraft) return;
+    const draft = pendingDraft;
+    setSelectedEmployee(draft.selectedEmployee || '');
+    setEmployeeSearch(draft.employeeSearch || draft.selectedEmployee || '');
+    setSelectedCustomer(
+      draft.selectedCustomer || { customerName: '', customerGstNo: '', customerMobileNo: '', customerEmail: '' }
+    );
+    setCustomerSearch(draft.customerSearch || draft.selectedCustomer?.customerName || '');
+    setParticularsList(
+      Array.isArray(draft.particularsList) && draft.particularsList.length
+        ? draft.particularsList
+        : Array(5).fill(null).map(() => getEmptyParticularRow())
+    );
+    setPaymentType(draft.paymentType || 'Cash');
+    setEnableCredit(Boolean(draft.enableCredit));
+    setAmountPaid(draft.amountPaid ?? '');
+    setPriceDiscount(draft.priceDiscount ?? '');
+    setTdsAmount(draft.tdsAmount ?? '');
+    setShowExtra(Boolean(draft.showExtra));
+    if (draft.totals) setTotals(draft.totals);
+    setPendingDraft(null);
+    toast.success('Draft restored');
+  };
+
+  const discardDraft = () => {
+    try {
+      localStorage.removeItem(DRAFT_KEY);
+    } catch {
+      // ignore storage failures
+    }
+    setPendingDraft(null);
+    toast.success('Draft discarded');
+  };
 
   const fetchNextBillNumber = async () => {
     try {
@@ -224,18 +397,21 @@ function CreateBillContent() {
 
   useEffect(() => {
     const handleGlobalKeyDown = (e) => {
-      // 1) Ctrl + Enter => GST Bill (18% GST) -> Auto Save & Print
-      if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
+      const gst = shortcuts.gst_bill;
+      const nonGst = shortcuts.non_gst_bill;
+      const quickSave = shortcuts.quick_save_bill;
+      const printReceipt = shortcuts.print_receipt;
+
+      // 1) GST Bill (18% GST) -> Save & Print
+      if (gst?.enabled !== false && matchesShortcut(e, gst?.keys)) {
         e.preventDefault();
         e.stopPropagation();
-        if (handleSaveRef.current) {
-          handleSaveRef.current(true, 18);
-        }
+        if (handleSaveRef.current) handleSaveRef.current(true, 18);
         return;
       }
 
-      // 2) Plain Enter => Non-GST Bill (0% GST) -> Auto Save & Print
-      if (e.key === 'Enter' && !e.ctrlKey && !e.altKey && !e.shiftKey && !e.metaKey) {
+      // 2) Non-GST Bill (0% GST) -> Save & Print
+      if (nonGst?.enabled !== false && matchesShortcut(e, nonGst?.keys)) {
         const targetTag = e.target?.tagName?.toLowerCase();
         const isParticularInput = e.target?.classList?.contains('particular-add-input') ||
           e.target?.classList?.contains('particular-input') ||
@@ -253,15 +429,28 @@ function CreateBillContent() {
 
         e.preventDefault();
         e.stopPropagation();
-        if (handleSaveRef.current) {
-          handleSaveRef.current(true, 0);
-        }
+        if (handleSaveRef.current) handleSaveRef.current(true, 0);
+        return;
+      }
+
+      // 3) Quick save without printing
+      if (quickSave?.enabled !== false && matchesShortcut(e, quickSave?.keys)) {
+        e.preventDefault();
+        e.stopPropagation();
+        if (handleSaveRef.current) handleSaveRef.current(false);
+        return;
+      }
+
+      // 4) Print current receipt
+      if (printReceipt?.enabled !== false && matchesShortcut(e, printReceipt?.keys)) {
+        e.preventDefault();
+        window.print();
       }
     };
 
     window.addEventListener('keydown', handleGlobalKeyDown);
     return () => window.removeEventListener('keydown', handleGlobalKeyDown);
-  }, []);
+  }, [shortcuts]);
 
   const handleEmployeeSelect = (emp) => {
     const fullName = typeof emp === 'object' ? (emp.fullName || emp.name || '') : String(emp);
@@ -625,6 +814,12 @@ function CreateBillContent() {
       if (resData.data) {
         toast.success(`Bill ${isEditMode ? 'updated' : 'saved'} successfully (${activeGstPct}% GST)!`);
         handleShowReceipt(resData.data, printAfter, activeGstPct);
+        try {
+          localStorage.removeItem(DRAFT_KEY);
+        } catch {
+          // ignore storage failures
+        }
+        setPendingDraft(null);
 
         if (!isEditMode) {
           setSelectedEmployee('');
@@ -672,6 +867,30 @@ function CreateBillContent() {
       <div className="page-header">
         <h2 style={{ color: '#002142', fontWeight: 700 }}>{isEditMode ? 'Edit Bill' : 'Create Bill'}</h2>
       </div>
+
+      {pendingDraft && !isEditMode && (
+        <div className="draft-banner">
+          <div className="draft-banner-text">
+            <i className="bi bi-clock-history" aria-hidden="true"></i>
+            <div>
+              <strong>Unsaved draft found</strong>
+              <span>
+                {pendingDraft.savedAt
+                  ? `Last edited ${new Date(pendingDraft.savedAt).toLocaleString()}`
+                  : 'Restore your in-progress bill'}
+              </span>
+            </div>
+          </div>
+          <div className="d-flex gap-2">
+            <button type="button" className="btn btn-sm btn-outline-secondary fw-semibold" onClick={discardDraft}>
+              Discard
+            </button>
+            <button type="button" className="btn btn-sm btn-primary fw-semibold" onClick={restoreDraft}>
+              Restore draft
+            </button>
+          </div>
+        </div>
+      )}
 
       <div className="bill-card">
         {/* Row 1: Bill No, Employee, Customer Search */}

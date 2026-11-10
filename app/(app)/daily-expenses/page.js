@@ -1,6 +1,7 @@
 'use client';
 import { useState, useEffect } from 'react';
 import toast from 'react-hot-toast';
+import EmptyState from '@/components/EmptyState';
 
 export default function AddDailyExpensesPage() {
   // Basic Info
@@ -570,6 +571,18 @@ export default function AddDailyExpensesPage() {
                   </tr>
                 </thead>
                 <tbody>
+                  {dailyExpenseItems.length === 0 ? (
+                    <tr>
+                      <td colSpan="4" className="p-0">
+                        <EmptyState
+                          icon="bi-receipt"
+                          title="No expense categories configured"
+                          message="Add expense items first to record daily category amounts."
+                          compact
+                        />
+                      </td>
+                    </tr>
+                  ) : null}
                   {Array.from({ length: Math.ceil(dailyExpenseItems.length / 2) }).map((_, index) => {
                     const item1 = dailyExpenseItems[index * 2];
                     const item2 = dailyExpenseItems[index * 2 + 1];

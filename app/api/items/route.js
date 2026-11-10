@@ -24,9 +24,10 @@ export async function POST(request) {
     const body = await request.json();
     const doc = {
       _type: 'item',
-      itemId: simpleId('ITEM'),
+      itemId: body.itemId || simpleId('ITEM'),
       name: body.name,
-      price: parseFloat(body.price) || 0,
+      category: body.category || '',
+      price: parseFloat(body.price ?? body.basePrice) || 0,
       priceBack: parseFloat(body.priceBack) || 0,
       description: body.description || '',
       createdAt: new Date().toISOString(),

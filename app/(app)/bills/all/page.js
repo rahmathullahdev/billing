@@ -4,17 +4,21 @@ import { useRouter } from 'next/navigation';
 import toast from 'react-hot-toast';
 import ReceiptPopup from '@/components/ReceiptPopup';
 import BillDetailsModal from '@/components/BillDetailsModal';
+import { TableSkeletonRows } from '@/components/Skeleton';
+import { useDebouncedValue } from '@/lib/hooks/useDebouncedValue';
 
 export default function ViewBillsPage() {
   const router = useRouter();
   const [bills, setBills] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [loadError, setLoadError] = useState(false);
   const [page, setPage] = useState(0);
   const [totalPages, setTotalPages] = useState(0);
   const [totalElements, setTotalElements] = useState(0);
   const [dateFilter, setDateFilter] = useState('today');
   const [customerFilter, setCustomerFilter] = useState('');
   const [customerSearch, setCustomerSearch] = useState('');
+  const debouncedCustomerSearch = useDebouncedValue(customerSearch, 250);
   const [showCustomerDropdown, setShowCustomerDropdown] = useState(false);
   const [customers, setCustomers] = useState([]);
   const [pageSize, setPageSize] = useState(15);
@@ -31,6 +35,7 @@ export default function ViewBillsPage() {
 
   const fetchBills = async () => {
     setLoading(true);
+    setLoadError(false);
     try {
       const query = new URLSearchParams({
         page: String(page),
@@ -54,6 +59,7 @@ export default function ViewBillsPage() {
     } catch (error) {
       console.error('Error fetching bills:', error);
       toast.error('Failed to load bills');
+      setLoadError(true);
     } finally {
       setLoading(false);
     }
@@ -136,7 +142,7 @@ export default function ViewBillsPage() {
   };
 
   const filteredCustomers = customers.filter(c =>
-    c.name && c.name.toLowerCase().includes(customerSearch.toLowerCase())
+    c.name && c.name.toLowerCase().includes(debouncedCustomerSearch.toLowerCase())
   );
 
   const handlePageChange = (newPage) => {
@@ -318,6 +324,13 @@ export default function ViewBillsPage() {
         </div>
       </div>
 
+      {loadError && (
+        <div className="alert alert-danger d-flex align-items-center justify-content-between gap-3">
+          <span><i className="bi bi-exclamation-triangle me-2"></i>Could not load bills.</span>
+          <button className="btn btn-sm btn-outline-danger fw-semibold" onClick={fetchBills}>Retry</button>
+        </div>
+      )}
+
       <div className="table-responsive border rounded-3 shadow-sm bg-white mb-3">
         <table className="bills-table data-table app-table align-middle mb-0" style={{ minWidth: '850px' }}>
           <thead>
@@ -333,14 +346,7 @@ export default function ViewBillsPage() {
           </thead>
           <tbody>
             {loading ? (
-              <tr>
-                <td colSpan="7" className="p-0">
-                  <div className="premium-loader-container">
-                    <div className="premium-loader"></div>
-                    <span className="loader-text mt-3">Fetching Bills...</span>
-                  </div>
-                </td>
-              </tr>
+              <TableSkeletonRows rows={6} columns={7} />
             ) : bills.length === 0 ? (
               <tr>
                 <td colSpan="7" className="text-center py-5 text-muted">

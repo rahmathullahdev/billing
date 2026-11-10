@@ -4,6 +4,10 @@ import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { AppContextProvider, useApp } from '@/context/AppContext';
 import toast, { Toaster } from 'react-hot-toast';
+import CommandPalette from '@/components/CommandPalette';
+import OnboardingModal from '@/components/OnboardingModal';
+import RoleBadge from '@/components/RoleBadge';
+import { useThrottledCallback } from '@/lib/hooks/useThrottledCallback';
 
 // Sidebar Navigation Structure matching original Menubar.jsx
 const NAV_ITEMS = [
@@ -69,6 +73,7 @@ const NAV_ITEMS = [
   { icon: 'bi-shield-lock', label: 'Page Access', href: '/manage-page-access', access: 'MANAGE_PAGE_ACCESS' },
   { type: 'heading', label: 'More' },
   { icon: 'bi-clock-history', label: 'Order History', href: '/orders', access: 'ORDERS' },
+  { icon: 'bi-gift', label: 'Referral & Affiliate', href: '/referral', access: 'REFERRAL' },
 ];
 
 function NavItem({ item, collapsed, pathname, hasAccess }) {
@@ -194,7 +199,7 @@ function Sidebar({ collapsed, setCollapsed, mobileOpen, setMobileOpen }) {
             <i className="bi bi-person-circle profile-icon"></i>
             <div className="profile-details link-text">
               <span className="profile-name">{isAdmin ? 'Administrator' : (auth.user?.username || 'Employee')}</span>
-              <span className="profile-role">{isAdmin ? 'Admin' : 'User'}</span>
+              <RoleBadge role={auth.role} className="mt-1" />
             </div>
           </div>
           <i className={`bi bi-chevron-${showLogout ? 'up' : 'down'} profile-toggle link-text`}></i>
@@ -237,11 +242,72 @@ function LayoutInner({ children }) {
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
-  const { auth } = useApp();
+  const { auth, hasAccess } = useApp();
 
   useEffect(() => {
     setMounted(true);
+    try {
+      if (localStorage.getItem('sidebarCollapsed') === 'true') setCollapsed(true);
+    } catch {
+      // ignore storage failures
+    }
   }, []);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem('sidebarCollapsed', String(collapsed));
+    } catch {
+      // ignore storage failures
+    }
+  }, [collapsed]);
+
+  const handleResize = useThrottledCallback(() => {
+    if (typeof window !== 'undefined' && window.innerWidth > 991) {
+      setMobileOpen(false);
+    }
+  }, 250);
+
+  useEffect(() => {
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, [handleResize]);
+
+  const commandItems = [];
+  NAV_ITEMS.forEach((item) => {
+    if (item.type === 'heading') return;
+    if (item.children) {
+      item.children.forEach((child) => {
+        if (hasAccess(child.access)) {
+          commandItems.push({
+            label: child.label,
+            href: child.href,
+            icon: child.icon,
+            group: item.label,
+          });
+        }
+      });
+    } else if (hasAccess(item.access)) {
+      commandItems.push({
+        label: item.label,
+        href: item.href,
+        icon: item.icon,
+        group: 'Pages',
+        keywords: item.label,
+      });
+    }
+  });
+  if (hasAccess('BILLS_CREATE')) {
+    commandItems.unshift({
+      label: 'Create new bill',
+      href: '/bills/create',
+      icon: 'bi-plus-circle',
+      group: 'Quick actions',
+      keywords: 'invoice new bill create',
+    });
+  }
+  if (hasAccess('SETTINGS')) {
+    commandItems.push({ label: 'Settings', href: '/settings', icon: 'bi-gear', group: 'Pages' });
+  }
 
   if (!mounted) {
     return null;
@@ -264,6 +330,8 @@ function LayoutInner({ children }) {
   return (
     <div className="app-container">
       <Toaster position="top-right" />
+      <CommandPalette items={commandItems} />
+      <OnboardingModal auth={auth} />
       <MobileTopbar onMenuOpen={() => setMobileOpen(true)} auth={auth} />
       {mobileOpen && <div className="sidebar-backdrop" onClick={() => setMobileOpen(false)}></div>}
       <Sidebar collapsed={collapsed} setCollapsed={setCollapsed} mobileOpen={mobileOpen} setMobileOpen={setMobileOpen} />

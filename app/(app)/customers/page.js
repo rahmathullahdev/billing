@@ -1,18 +1,40 @@
 'use client';
 import { useState, useEffect, useMemo } from 'react';
 import toast from 'react-hot-toast';
+import DataTable from '@/components/DataTable';
+import ConfirmDialog from '@/components/ConfirmDialog';
+import { useDebouncedValue } from '@/lib/hooks/useDebouncedValue';
+
+const EMPTY_FORM = {
+  name: '',
+  phoneNumber: '',
+  email: '',
+  taxNumber: '',
+  companyName: '',
+  address: '',
+  creditAmount: 0,
+};
+
+const PHONE_RE = /^[0-9+\-()\s]{6,20}$/;
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 export default function ManageCustomersPage() {
   const [customers, setCustomers] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [loadError, setLoadError] = useState(false);
   const [search, setSearch] = useState('');
+  const debouncedSearch = useDebouncedValue(search, 250);
   const [statusFilter, setStatusFilter] = useState('all');
   const [page, setPage] = useState(0);
   const size = 10;
   const [modalOpen, setModalOpen] = useState(false);
   const [editingItem, setEditingItem] = useState(null);
-  const [deleteConfirmId, setDeleteConfirmId] = useState(null);
-  const [formData, setFormData] = useState({ name: '', phoneNumber: '', email: '', taxNumber: '', companyName: '', address: '', creditAmount: 0 });
+  const [deleteTarget, setDeleteTarget] = useState(null);
+  const [bulkDeleteOpen, setBulkDeleteOpen] = useState(false);
+  const [bulkBusy, setBulkBusy] = useState(false);
+  const [selectedIds, setSelectedIds] = useState(new Set());
+  const [formData, setFormData] = useState(EMPTY_FORM);
+  const [formErrors, setFormErrors] = useState({});
 
   const itemId = (x) => x && (x._id || x.id);
 
@@ -20,54 +42,283 @@ export default function ManageCustomersPage() {
 
   const fetchCustomers = async () => {
     setLoading(true);
+    setLoadError(false);
     try {
       const res = await fetch('/api/customers');
+      if (!res.ok) throw new Error('Request failed');
       const data = await res.json();
       const list = Array.isArray(data.data) ? data.data : (data?.data?.content || []);
       setCustomers(list);
-    } catch (e) { toast.error('Failed to load customers'); setCustomers([]); }
-    finally { setLoading(false); }
+    } catch {
+      toast.error('Failed to load customers');
+      setCustomers([]);
+      setLoadError(true);
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const resetForm = () => setFormData({ name: '', phoneNumber: '', email: '', taxNumber: '', companyName: '', address: '', creditAmount: 0 });
+  const resetForm = () => {
+    setFormData(EMPTY_FORM);
+    setFormErrors({});
+  };
+
+  const updateField = (key, value) => {
+    setFormData((prev) => ({ ...prev, [key]: value }));
+    setFormErrors((prev) => (prev[key] ? { ...prev, [key]: undefined } : prev));
+  };
+
+  const validateForm = () => {
+    const errors = {};
+    if (!formData.name.trim()) errors.name = 'Customer name is required';
+    if (!formData.phoneNumber.trim()) errors.phoneNumber = 'Mobile number is required';
+    else if (!PHONE_RE.test(formData.phoneNumber.trim())) errors.phoneNumber = 'Enter a valid phone number';
+    if (formData.email.trim() && !EMAIL_RE.test(formData.email.trim())) errors.email = 'Enter a valid email address';
+    if (Number(formData.creditAmount) < 0) errors.creditAmount = 'Credit cannot be negative';
+    setFormErrors(errors);
+    return Object.keys(errors).length === 0;
+  };
 
   const handleSave = async (e) => {
     e.preventDefault();
+    if (!validateForm()) {
+      toast.error('Please fix the highlighted fields');
+      return;
+    }
     try {
       const url = editingItem ? `/api/customers/${itemId(editingItem)}` : '/api/customers';
       const method = editingItem ? 'PUT' : 'POST';
       const res = await fetch(url, { method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(formData) });
       if (res.ok) {
         toast.success(`Customer ${editingItem ? 'updated' : 'created'} successfully`);
-        setModalOpen(false); setEditingItem(null); resetForm(); fetchCustomers();
-      } else { toast.error('Failed to save customer'); }
-    } catch (e) { toast.error('Error saving customer'); }
+        setModalOpen(false);
+        setEditingItem(null);
+        resetForm();
+        fetchCustomers();
+      } else {
+        toast.error('Failed to save customer');
+      }
+    } catch {
+      toast.error('Error saving customer');
+    }
   };
 
   const handleDelete = async (id) => {
+    const previous = customers;
+    setCustomers((list) => list.filter((x) => itemId(x) !== id));
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      next.delete(id);
+      return next;
+    });
+    setDeleteTarget(null);
     try {
       const res = await fetch(`/api/customers/${id}`, { method: 'DELETE' });
-      if (res.ok) { toast.success('Customer deleted'); fetchCustomers(); }
-      else { toast.error('Failed to delete customer'); }
-    } catch (e) { toast.error('Failed to delete customer'); }
+      if (!res.ok) throw new Error('Request failed');
+      toast.success('Customer deleted');
+    } catch {
+      setCustomers(previous);
+      toast.error('Failed to delete customer');
+    }
   };
 
   const handleToggle = async (c) => {
+    const id = itemId(c);
+    const nextActive = c.isActive === false;
+    const previous = customers;
+    setCustomers((list) => list.map((x) => (itemId(x) === id ? { ...x, isActive: nextActive } : x)));
     try {
-      const res = await fetch(`/api/customers/${itemId(c)}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ...c, isActive: !c.isActive }) });
-      if (res.ok) { toast.success(c.isActive ? 'Customer deactivated' : 'Customer activated'); fetchCustomers(); }
-    } catch (e) { toast.error('Error updating status'); }
+      const res = await fetch(`/api/customers/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ...c, isActive: nextActive }),
+      });
+      if (!res.ok) throw new Error('Request failed');
+      toast.success(nextActive ? 'Customer activated' : 'Customer deactivated');
+    } catch {
+      setCustomers(previous);
+      toast.error('Error updating status');
+    }
+  };
+
+  const handleBulkStatus = async (nextActive) => {
+    const ids = Array.from(selectedIds);
+    if (ids.length === 0) return;
+    const previous = customers;
+    const byId = new Map(customers.map((c) => [itemId(c), c]));
+    setBulkBusy(true);
+    setCustomers((list) => list.map((x) => (selectedIds.has(itemId(x)) ? { ...x, isActive: nextActive } : x)));
+    const results = await Promise.allSettled(
+      ids.map((id) =>
+        fetch(`/api/customers/${id}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ ...(byId.get(id) || {}), isActive: nextActive }),
+        }).then((res) => {
+          if (!res.ok) throw new Error('Request failed');
+          return res;
+        })
+      )
+    );
+    const failed = results.filter((r) => r.status === 'rejected').length;
+    setBulkBusy(false);
+    if (failed > 0) {
+      setCustomers(previous);
+      toast.error(`${failed} customer${failed === 1 ? '' : 's'} could not be updated`);
+    } else {
+      toast.success(`${ids.length} customer${ids.length === 1 ? '' : 's'} ${nextActive ? 'activated' : 'deactivated'}`);
+      setSelectedIds(new Set());
+    }
+  };
+
+  const handleBulkDelete = async () => {
+    const ids = Array.from(selectedIds);
+    if (ids.length === 0) return;
+    const previous = customers;
+    setBulkBusy(true);
+    setCustomers((list) => list.filter((x) => !selectedIds.has(itemId(x))));
+    const results = await Promise.allSettled(
+      ids.map((id) =>
+        fetch(`/api/customers/${id}`, { method: 'DELETE' }).then((res) => {
+          if (!res.ok) throw new Error('Request failed');
+          return res;
+        })
+      )
+    );
+    const failed = results.filter((r) => r.status === 'rejected').length;
+    setBulkBusy(false);
+    setBulkDeleteOpen(false);
+    if (failed > 0) {
+      setCustomers(previous);
+      toast.error(`${failed} customer${failed === 1 ? '' : 's'} could not be deleted`);
+    } else {
+      toast.success(`${ids.length} customer${ids.length === 1 ? '' : 's'} deleted`);
+      setSelectedIds(new Set());
+    }
   };
 
   const filtered = useMemo(() => {
-    const q = search.toLowerCase();
-    return customers.filter(c =>
+    const q = debouncedSearch.toLowerCase();
+    return customers.filter((c) =>
       (statusFilter === 'all' || String(c.isActive) === String(statusFilter === 'active')) &&
-      (!q || (c.name || '').toLowerCase().includes(q) || (c.phoneNumber || '').includes(q) || (c.email || '').toLowerCase().includes(q)));
-  }, [customers, search, statusFilter]);
+      (!q || (c.name || '').toLowerCase().includes(q) || (c.phoneNumber || '').includes(q) || (c.email || '').toLowerCase().includes(q))
+    );
+  }, [customers, debouncedSearch, statusFilter]);
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / size));
   const paged = filtered.slice(page * size, page * size + size);
+
+  useEffect(() => {
+    setPage(0);
+  }, [debouncedSearch, statusFilter]);
+
+  useEffect(() => {
+    if (page > totalPages - 1) setPage(Math.max(0, totalPages - 1));
+  }, [page, totalPages]);
+
+  const columns = [
+    {
+      key: 'index',
+      header: '#',
+      className: 'th-center',
+      style: { width: '60px' },
+      render: (c, i) => (
+        <span className="badge bg-light text-dark border px-2 py-1 font-monospace">{page * size + i + 1}</span>
+      ),
+    },
+    {
+      key: 'name',
+      header: 'CUSTOMER NAME',
+      className: 'th-left',
+      style: { minWidth: '200px' },
+      render: (c) => <span className="fw-bold" style={{ color: '#002142' }}>{c.name}</span>,
+    },
+    {
+      key: 'phoneNumber',
+      header: 'MOBILE',
+      className: 'th-left',
+      style: { width: '140px' },
+      render: (c) => (c.phoneNumber ? <span className="text-muted"><i className="bi bi-telephone text-primary me-1"></i>{c.phoneNumber}</span> : '-'),
+    },
+    {
+      key: 'email',
+      header: 'EMAIL',
+      className: 'th-left',
+      style: { minWidth: '180px' },
+      render: (c) => <span className="text-muted">{c.email || '-'}</span>,
+    },
+    {
+      key: 'taxNumber',
+      header: 'GSTIN',
+      className: 'th-center',
+      style: { width: '130px' },
+      render: (c) => (c.taxNumber ? <span className="badge bg-light text-dark border font-monospace">{c.taxNumber}</span> : <span className="text-muted">-</span>),
+    },
+    {
+      key: 'creditAmount',
+      header: 'CREDIT (₹)',
+      className: 'th-right',
+      style: { width: '120px' },
+      render: (c) => <span className="text-danger fw-bold">₹ {Number(c.creditAmount || 0).toFixed(2)}</span>,
+    },
+    {
+      key: 'status',
+      header: 'STATUS',
+      className: 'th-center',
+      style: { width: '110px' },
+      render: (c) => (
+        <button
+          type="button"
+          onClick={() => handleToggle(c)}
+          className={`btn btn-sm border-0 p-0 ${c.isActive !== false ? 'badge-pill-success' : 'badge-pill-danger'}`}
+          style={{ cursor: 'pointer' }}
+          title="Click to toggle status"
+        >
+          <i className={`bi bi-${c.isActive !== false ? 'check-circle-fill' : 'x-circle-fill'}`} style={{ fontSize: '0.65rem' }}></i>
+          <span>{c.isActive !== false ? 'Active' : 'Inactive'}</span>
+        </button>
+      ),
+    },
+    {
+      key: 'actions',
+      header: 'ACTIONS',
+      className: 'th-right',
+      style: { width: '120px' },
+      render: (c) => (
+        <div className="d-inline-flex align-items-center gap-1">
+          <button
+            className="btn btn-sm btn-outline-secondary p-1 d-inline-flex align-items-center justify-content-center shadow-none"
+            style={{ width: '30px', height: '30px', borderRadius: '6px' }}
+            onClick={() => {
+              setEditingItem(c);
+              setFormErrors({});
+              setFormData({
+                name: c.name || '',
+                phoneNumber: c.phoneNumber || '',
+                email: c.email || '',
+                taxNumber: c.taxNumber || '',
+                companyName: c.companyName || '',
+                address: c.address || '',
+                creditAmount: c.creditAmount || 0,
+              });
+              setModalOpen(true);
+            }}
+            title="Edit"
+          >
+            <i className="bi bi-pencil" style={{ fontSize: '0.8rem' }}></i>
+          </button>
+          <button
+            className="btn btn-sm btn-outline-danger p-1 d-inline-flex align-items-center justify-content-center shadow-none"
+            style={{ width: '30px', height: '30px', borderRadius: '6px' }}
+            onClick={() => setDeleteTarget({ id: itemId(c), name: c.name })}
+            title="Delete"
+          >
+            <i className="bi bi-trash" style={{ fontSize: '0.8rem' }}></i>
+          </button>
+        </div>
+      ),
+    },
+  ];
 
   return (
     <div className="customers-page fade-in text-dark p-3">
@@ -81,7 +332,11 @@ export default function ManageCustomersPage() {
             <p className="mb-0 text-muted small">Add, update and oversee client profiles and contact details</p>
           </div>
         </div>
-        <button className="btn text-white fw-semibold d-flex align-items-center gap-2" style={{ backgroundColor: '#002142', borderRadius: '8px' }} onClick={() => { setEditingItem(null); resetForm(); setModalOpen(true); }}>
+        <button
+          className="btn text-white fw-semibold d-flex align-items-center gap-2"
+          style={{ backgroundColor: '#002142', borderRadius: '8px' }}
+          onClick={() => { setEditingItem(null); resetForm(); setModalOpen(true); }}
+        >
           <i className="bi bi-plus-lg"></i><span>Add Customer</span>
         </button>
       </div>
@@ -92,76 +347,63 @@ export default function ManageCustomersPage() {
         <p className="mb-0 text-white-50 small">Manage contact details, GST numbers and credit accounts</p>
       </div>
 
+      {loadError && (
+        <div className="alert alert-danger d-flex align-items-center justify-content-between gap-3">
+          <span><i className="bi bi-exclamation-triangle me-2"></i>Could not load customers.</span>
+          <button className="btn btn-sm btn-outline-danger fw-semibold" onClick={fetchCustomers}>Retry</button>
+        </div>
+      )}
+
       <div className="bg-white p-3 rounded shadow-sm mb-3 d-flex flex-wrap align-items-center justify-content-between gap-2">
         <div className="input-group" style={{ maxWidth: '350px' }}>
           <span className="input-group-text bg-light border-end-0"><i className="bi bi-search text-muted"></i></span>
-          <input type="text" placeholder="Search Customer Name, Phone or Email..." className="form-control border-start-0 shadow-none" value={search} onChange={e => { setSearch(e.target.value); setPage(0); }} />
+          <input
+            type="text"
+            placeholder="Search Customer Name, Phone or Email..."
+            className="form-control border-start-0 shadow-none"
+            value={search}
+            onChange={(e) => { setSearch(e.target.value); setPage(0); }}
+          />
         </div>
         <div className="btn-group">
-          {['all', 'active', 'inactive'].map(s => (
-            <button key={s} className={`btn btn-sm ${statusFilter === s ? 'btn-dark' : 'btn-outline-dark'}`} onClick={() => { setStatusFilter(s); setPage(0); }}>{s.charAt(0).toUpperCase() + s.slice(1)}</button>
+          {['all', 'active', 'inactive'].map((s) => (
+            <button
+              key={s}
+              className={`btn btn-sm ${statusFilter === s ? 'btn-dark' : 'btn-outline-dark'}`}
+              onClick={() => { setStatusFilter(s); setPage(0); }}
+            >
+              {s.charAt(0).toUpperCase() + s.slice(1)}
+            </button>
           ))}
         </div>
       </div>
 
-      <div className="table-responsive border rounded-3 shadow-sm bg-white mb-3">
-        <table className="table app-table align-middle mb-0" style={{ minWidth: '950px' }}>
-          <thead>
-            <tr>
-              <th className="th-center" style={{ width: '60px' }}>#</th>
-              <th className="th-left" style={{ minWidth: '200px' }}>CUSTOMER NAME</th>
-              <th className="th-left" style={{ width: '140px' }}>MOBILE</th>
-              <th className="th-left" style={{ minWidth: '180px' }}>EMAIL</th>
-              <th className="th-center" style={{ width: '130px' }}>GSTIN</th>
-              <th className="th-right" style={{ width: '120px' }}>CREDIT (₹)</th>
-              <th className="th-center" style={{ width: '110px' }}>STATUS</th>
-              <th className="th-right" style={{ width: '120px' }}>ACTIONS</th>
-            </tr>
-          </thead>
-          <tbody>
-            {loading ? (
-              <tr><td colSpan="8" className="text-center py-5"><div className="spinner-border text-primary spinner-border-sm me-2"></div>Loading customers...</td></tr>
-            ) : paged.length === 0 ? (
-              <tr><td colSpan="8" className="text-center py-5 text-muted"><i className="bi bi-person-x fs-2 d-block mb-2 text-secondary"></i>No customers found.</td></tr>
-            ) : paged.map((c, i) => (
-              <tr key={itemId(c) || i} className="table-row-hover">
-                <td className="td-center fw-bold text-muted">
-                  <span className="badge bg-light text-dark border px-2 py-1 font-monospace">{page * size + i + 1}</span>
-                </td>
-                <td className="td-left fw-bold" style={{ color: '#002142' }}>{c.name}</td>
-                <td className="td-left text-muted">
-                  {c.phoneNumber ? <span><i className="bi bi-telephone text-primary me-1"></i>{c.phoneNumber}</span> : '-'}
-                </td>
-                <td className="td-left text-muted">{c.email || '-'}</td>
-                <td className="td-center">
-                  {c.taxNumber ? <span className="badge bg-light text-dark border font-monospace">{c.taxNumber}</span> : <span className="text-muted">-</span>}
-                </td>
-                <td className="td-right text-danger fw-bold">
-                  ₹ {Number(c.creditAmount || 0).toFixed(2)}
-                </td>
-                <td className="td-center">
-                  <button 
-                    type="button"
-                    onClick={() => handleToggle(c)} 
-                    className={`btn btn-sm border-0 p-0 ${c.isActive !== false ? 'badge-pill-success' : 'badge-pill-danger'}`}
-                    style={{ cursor: 'pointer' }}
-                    title="Click to toggle status"
-                  >
-                    <i className={`bi bi-${c.isActive !== false ? 'check-circle-fill' : 'x-circle-fill'}`} style={{ fontSize: '0.65rem' }}></i>
-                    <span>{c.isActive !== false ? 'Active' : 'Inactive'}</span>
-                  </button>
-                </td>
-                <td className="td-right">
-                  <div className="d-inline-flex align-items-center gap-1">
-                    <button className="btn btn-sm btn-outline-secondary p-1 d-inline-flex align-items-center justify-content-center shadow-none" style={{ width: '30px', height: '30px', borderRadius: '6px' }} onClick={() => { setEditingItem(c); setFormData({ name: c.name || '', phoneNumber: c.phoneNumber || '', email: c.email || '', taxNumber: c.taxNumber || '', companyName: c.companyName || '', address: c.address || '', creditAmount: c.creditAmount || 0 }); setModalOpen(true); }} title="Edit"><i className="bi bi-pencil" style={{ fontSize: '0.8rem' }}></i></button>
-                    <button className="btn btn-sm btn-outline-danger p-1 d-inline-flex align-items-center justify-content-center shadow-none" style={{ width: '30px', height: '30px', borderRadius: '6px' }} onClick={() => setDeleteConfirmId(itemId(c))} title="Delete"><i className="bi bi-trash" style={{ fontSize: '0.8rem' }}></i></button>
-                  </div>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+      {selectedIds.size > 0 && (
+        <div className="bulk-bar">
+          <span className="fw-semibold"><i className="bi bi-check2-square me-2"></i>{selectedIds.size} selected</span>
+          <div className="d-flex flex-wrap gap-2">
+            <button className="btn btn-sm btn-outline-success fw-semibold" onClick={() => handleBulkStatus(true)} disabled={bulkBusy}>Activate</button>
+            <button className="btn btn-sm btn-outline-secondary fw-semibold" onClick={() => handleBulkStatus(false)} disabled={bulkBusy}>Deactivate</button>
+            <button className="btn btn-sm btn-danger fw-semibold" onClick={() => setBulkDeleteOpen(true)} disabled={bulkBusy}>Delete</button>
+            <button className="btn btn-sm btn-light border fw-semibold" onClick={() => setSelectedIds(new Set())} disabled={bulkBusy}>Clear</button>
+          </div>
+        </div>
+      )}
+
+      <DataTable
+        columns={columns}
+        rows={paged}
+        rowKey={(c) => itemId(c)}
+        loading={loading}
+        selectable
+        selectedKeys={selectedIds}
+        onSelectionChange={setSelectedIds}
+        skeletonRows={size}
+        minWidth="950px"
+        emptyIcon="bi-person-x"
+        emptyTitle="No customers found"
+        emptyMessage={debouncedSearch || statusFilter !== 'all' ? 'Try a different search or filter.' : 'Add your first customer to get started.'}
+      />
 
       {filtered.length > size && (
         <div className="d-flex justify-content-between align-items-center bg-white rounded shadow-sm p-2 mt-3">
@@ -176,18 +418,57 @@ export default function ManageCustomersPage() {
 
       {modalOpen && (
         <div className="modal-backdrop-custom" onClick={() => setModalOpen(false)}>
-          <div className="modal-box-custom" onClick={e => e.stopPropagation()}>
+          <div className="modal-box-custom" onClick={(e) => e.stopPropagation()}>
             <h5 className="fw-bold" style={{ color: '#002142' }}>{editingItem ? 'Edit Customer' : 'Add New Customer'}</h5>
             <hr />
-            <form onSubmit={handleSave}>
+            <form onSubmit={handleSave} noValidate>
               <div className="row g-2">
-                <div className="col-md-6"><div className="form-group my-2"><label className="fw-bold small text-muted">CUSTOMER NAME</label><input type="text" className="form-control" value={formData.name} onChange={e => setFormData({ ...formData, name: e.target.value })} required /></div></div>
-                <div className="col-md-6"><div className="form-group my-2"><label className="fw-bold small text-muted">MOBILE NUMBER</label><input type="text" className="form-control" value={formData.phoneNumber} onChange={e => setFormData({ ...formData, phoneNumber: e.target.value })} required /></div></div>
-                <div className="col-md-6"><div className="form-group my-2"><label className="fw-bold small text-muted">EMAIL</label><input type="email" className="form-control" value={formData.email} onChange={e => setFormData({ ...formData, email: e.target.value })} /></div></div>
-                <div className="col-md-6"><div className="form-group my-2"><label className="fw-bold small text-muted">GSTIN / TAX NO</label><input type="text" className="form-control" value={formData.taxNumber} onChange={e => setFormData({ ...formData, taxNumber: e.target.value })} /></div></div>
-                <div className="col-md-6"><div className="form-group my-2"><label className="fw-bold small text-muted">COMPANY</label><input type="text" className="form-control" value={formData.companyName} onChange={e => setFormData({ ...formData, companyName: e.target.value })} /></div></div>
-                <div className="col-md-6"><div className="form-group my-2"><label className="fw-bold small text-muted">CREDIT AMOUNT (₹)</label><input type="number" step="0.01" className="form-control" value={formData.creditAmount} onChange={e => setFormData({ ...formData, creditAmount: Number(e.target.value) })} /></div></div>
-                <div className="col-12"><div className="form-group my-2"><label className="fw-bold small text-muted">ADDRESS</label><input type="text" className="form-control" value={formData.address} onChange={e => setFormData({ ...formData, address: e.target.value })} /></div></div>
+                <div className="col-md-6">
+                  <div className="form-group my-2">
+                    <label className="fw-bold small text-muted">CUSTOMER NAME</label>
+                    <input type="text" className={`form-control ${formErrors.name ? 'is-invalid' : ''}`} value={formData.name} onChange={(e) => updateField('name', e.target.value)} />
+                    {formErrors.name && <div className="field-error">{formErrors.name}</div>}
+                  </div>
+                </div>
+                <div className="col-md-6">
+                  <div className="form-group my-2">
+                    <label className="fw-bold small text-muted">MOBILE NUMBER</label>
+                    <input type="text" className={`form-control ${formErrors.phoneNumber ? 'is-invalid' : ''}`} value={formData.phoneNumber} onChange={(e) => updateField('phoneNumber', e.target.value)} />
+                    {formErrors.phoneNumber && <div className="field-error">{formErrors.phoneNumber}</div>}
+                  </div>
+                </div>
+                <div className="col-md-6">
+                  <div className="form-group my-2">
+                    <label className="fw-bold small text-muted">EMAIL</label>
+                    <input type="email" className={`form-control ${formErrors.email ? 'is-invalid' : ''}`} value={formData.email} onChange={(e) => updateField('email', e.target.value)} />
+                    {formErrors.email && <div className="field-error">{formErrors.email}</div>}
+                  </div>
+                </div>
+                <div className="col-md-6">
+                  <div className="form-group my-2">
+                    <label className="fw-bold small text-muted">GSTIN / TAX NO</label>
+                    <input type="text" className="form-control" value={formData.taxNumber} onChange={(e) => updateField('taxNumber', e.target.value)} />
+                  </div>
+                </div>
+                <div className="col-md-6">
+                  <div className="form-group my-2">
+                    <label className="fw-bold small text-muted">COMPANY</label>
+                    <input type="text" className="form-control" value={formData.companyName} onChange={(e) => updateField('companyName', e.target.value)} />
+                  </div>
+                </div>
+                <div className="col-md-6">
+                  <div className="form-group my-2">
+                    <label className="fw-bold small text-muted">CREDIT AMOUNT (₹)</label>
+                    <input type="number" step="0.01" className={`form-control ${formErrors.creditAmount ? 'is-invalid' : ''}`} value={formData.creditAmount} onChange={(e) => updateField('creditAmount', Number(e.target.value))} />
+                    {formErrors.creditAmount && <div className="field-error">{formErrors.creditAmount}</div>}
+                  </div>
+                </div>
+                <div className="col-12">
+                  <div className="form-group my-2">
+                    <label className="fw-bold small text-muted">ADDRESS</label>
+                    <input type="text" className="form-control" value={formData.address} onChange={(e) => updateField('address', e.target.value)} />
+                  </div>
+                </div>
               </div>
               <div className="d-flex justify-content-end gap-2 mt-4">
                 <button type="button" className="btn btn-secondary btn-sm" onClick={() => setModalOpen(false)}>Cancel</button>
@@ -198,23 +479,24 @@ export default function ManageCustomersPage() {
         </div>
       )}
 
-      {deleteConfirmId && (
-        <div className="modal-backdrop-custom" onClick={() => setDeleteConfirmId(null)}>
-          <div className="modal-box-custom p-4 text-center" onClick={e => e.stopPropagation()} style={{ maxWidth: '400px' }}>
-            <div className="mb-3">
-              <div className="d-inline-flex align-items-center justify-content-center bg-danger bg-opacity-10 rounded-circle" style={{ width: '80px', height: '80px' }}>
-                <i className="bi bi-exclamation-triangle-fill text-danger" style={{ fontSize: '2.5rem' }}></i>
-              </div>
-            </div>
-            <h4 className="fw-bold text-dark mb-2">Delete Customer?</h4>
-            <p className="text-muted mb-4">Are you sure you want to delete this customer? This action cannot be undone and will permanently remove their details.</p>
-            <div className="d-flex justify-content-center gap-3">
-              <button className="btn btn-light px-4 border fw-semibold" onClick={() => setDeleteConfirmId(null)}>Cancel</button>
-              <button className="btn btn-danger px-4 fw-semibold shadow-sm" onClick={() => { handleDelete(deleteConfirmId); setDeleteConfirmId(null); }}>Yes, Delete</button>
-            </div>
-          </div>
-        </div>
-      )}
+      <ConfirmDialog
+        open={Boolean(deleteTarget)}
+        title="Delete customer?"
+        message={`Are you sure you want to delete ${deleteTarget?.name || 'this customer'}? This action cannot be undone.`}
+        confirmLabel="Yes, delete"
+        onConfirm={() => handleDelete(deleteTarget.id)}
+        onCancel={() => setDeleteTarget(null)}
+      />
+
+      <ConfirmDialog
+        open={bulkDeleteOpen}
+        title={`Delete ${selectedIds.size} customer${selectedIds.size === 1 ? '' : 's'}?`}
+        message="This permanently removes the selected customer profiles. This action cannot be undone."
+        confirmLabel="Yes, delete selected"
+        loading={bulkBusy}
+        onConfirm={handleBulkDelete}
+        onCancel={() => setBulkDeleteOpen(false)}
+      />
     </div>
   );
 }
