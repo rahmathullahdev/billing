@@ -24,7 +24,7 @@ if (isProd) {
       "default-src 'self'",
       "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.sanity.io",
       "style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://fonts.googleapis.com",
-      "font-src 'self' data: https://fonts.gstatic.com",
+      "font-src 'self' data: https://fonts.gstatic.com https://cdn.jsdelivr.net",
       "img-src 'self' data: blob: https:",
       "connect-src 'self' https://*.sanity.io wss://*.sanity.io https://cdn.sanity.io",
       "frame-src 'self' https://*.sanity.io",
